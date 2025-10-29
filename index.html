@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ベクトル学習VR - 3Dバージョン</title>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    background: #000;
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+  #info {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.85);
+    padding: 12px 18px;
+    border-radius: 8px;
+    width: 320px;
+    font-size: 14px;
+    line-height: 1.5em;
+    z-index: 10;
+  }
+  #info h3 {
+    margin: 0 0 10px 0;
+    font-weight: 700;
+    font-size: 20px;
+  }
+  .calc-row {
+    margin: 6px 0;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+  }
+  .calc-label { color: #aaa; }
+  .calc-value { color: #0cf; }
+
+  #controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.85);
+    padding: 15px 20px;
+    border-radius: 8px;
+    width: 320px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    z-index: 10;
+  }
+  #controls h4 {
+    margin: 12px 0 8px 0;
+    font-weight: 700;
+    border-bottom: 1px solid #444;
+    padding-bottom: 4px;
+  }
+  .slider-container {
+    margin-bottom: 8px;
+  }
+  label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 3px;
+  }
+  input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 5px;
+    background: #444;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #09f;
+    cursor: pointer;
+    border: 2px solid #fff;
+    transition: background 0.3s ease;
+  }
+  input[type=range]::-webkit-slider-thumb:hover {
+    background: #06c;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #09f;
+    cursor: pointer;
+    border: 2px solid #fff;
+  }
+  .value { color: #0af; font-weight: 600; }
+  .value.red { color: #f55; }
+  .value.green { color: #5f5; }
+  button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border: none;
+    background: #08a;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  button:hover { background: #06a; }
+  #vrButton { background: #f63; }
+  #vrButton:hover { background: #d52; }
+  canvas { display: block; }
+  
+  .mode-info {
+    background: rgba(255, 150, 0, 0.9);
+    padding: 8px 12px;
+    border-radius: 5px;
+    margin: 8px 0;
+    font-size: 13px;
+  }
+</style>
+</head>
+<body>
+
+<div id="info">
+  <h3>🧮 3Dベクトル学習</h3>
+  <div class="calc-row">
+    <span class="calc-label">A·B (内積):</span>
+    <span class="calc-value" id="dotProductAB">0.00</span>
+  </div>
+  <div class="calc-row">
+    <span class="calc-label">A·C (内積):</span>
+    <span class="calc-value" id="dotProductAC">0.00</span>
+  </div>
+  <div class="calc-row">
+    <span class="calc-label">B·C (内積):</span>
+    <span class="calc-value" id="dotProductBC">0.00</span>
+  </div>
+  <hr style="border-color: #444; margin: 10px 0;">
+  <div class="calc-row">
+    <span class="calc-label">|A|:</span>
+    <span class="calc-value" id="magnitudeA">0.00</span>
+  </div>
+  <div class="calc-row">
+    <span class="calc-label">|B|:</span>
+    <span class="calc-value" id="magnitudeB">0.00</span>
+  </div>
+  <div class="calc-row">
+    <span class="calc-label">|C|:</span>
+    <span class="calc-value" id="magnitudeC">0.00</span>
+  </div>
+  <hr style="border-color: #444; margin: 10px 0;">
+  <div class="calc-row">
+    <span class="calc-label">∠(A,B):</span>
+    <span class="calc-value" id="angleAB">0.0°</span>
+  </div>
+  <div class="calc-row">
+    <span class="calc-label">∠(A,C):</span>
+    <span class="calc-value" id="angleAC">0.0°</span>
+  </div>
+  <div class="calc-row">
+    <span class="calc-label">∠(B,C):</span>
+    <span class="calc-value" id="angleBC">0.0°</span>
+  </div>
+  <div class="mode-info" id="modeInfo" style="display:none;">
+    🎯 矢印をクリックしてドラッグ！
+  </div>
+</div>
+
+<div id="controls">
+  <h4>ベクトル A (青)</h4>
+  <div class="slider-container">
+    <label>X: <span class="value" id="vectorAX-value">3.0</span></label>
+    <input type="range" id="vectorAX" min="-5" max="5" step="0.1" value="3" />
+  </div>
+  <div class="slider-container">
+    <label>Y: <span class="value" id="vectorAY-value">2.0</span></label>
+    <input type="range" id="vectorAY" min="-5" max="5" step="0.1" value="2" />
+  </div>
+  <div class="slider-container">
+    <label>Z: <span class="value" id="vectorAZ-value">1.0</span></label>
+    <input type="range" id="vectorAZ" min="-5" max="5" step="0.1" value="1" />
+  </div>
+
+  <h4>ベクトル B (赤)</h4>
+  <div class="slider-container">
+    <label>X: <span class="value red" id="vectorBX-value">2.0</span></label>
+    <input type="range" id="vectorBX" min="-5" max="5" step="0.1" value="2" />
+  </div>
+  <div class="slider-container">
+    <label>Y: <span class="value red" id="vectorBY-value">3.0</span></label>
+    <input type="range" id="vectorBY" min="-5" max="5" step="0.1" value="3" />
+  </div>
+  <div class="slider-container">
+    <label>Z: <span class="value red" id="vectorBZ-value">0.5</span></label>
+    <input type="range" id="vectorBZ" min="-5" max="5" step="0.1" value="0.5" />
+  </div>
+
+  <h4>ベクトル C (緑)</h4>
+  <div class="slider-container">
+    <label>X: <span class="value green" id="vectorCX-value">1.0</span></label>
+    <input type="range" id="vectorCX" min="-5" max="5" step="0.1" value="1" />
+  </div>
+  <div class="slider-container">
+    <label>Y: <span class="value green" id="vectorCY-value">1.0</span></label>
+    <input type="range" id="vectorCY" min="-5" max="5" step="0.1" value="1" />
+  </div>
+  <div class="slider-container">
+    <label>Z: <span class="value green" id="vectorCZ-value">3.0</span></label>
+    <input type="range" id="vectorCZ" min="-5" max="5" step="0.1" value="3" />
+  </div>
+
+  <button id="toggleDragBtn">🎯 ドラッグモード切替</button>
+  <button id="togglePlaneBtn">📐 平面表示切替</button>
+  <button id="resetBtn">リセット</button>
+  <button id="toggleGridBtn">グリッド切替</button>
+</div>
+
+<script>
+  let scene, camera, renderer, controls;
+  let vectorAArrow, vectorBArrow, vectorCArrow;
+  let vectorALabel, vectorBLabel, vectorCLabel;
+  let angleLabels = []; // 角度表示用のスプライト
+  let angleArcs = []; // 角度の円弧表示
+  let projectionLines = [];
+  let grid, parallelogram;
+  let transformControl;
+  let isDragMode = false;
+  
+  let vecA = new THREE.Vector3(3, 2, 1);
+  let vecB = new THREE.Vector3(2, 3, 0.5);
+  let vecC = new THREE.Vector3(1, 1, 3);
+
+  function init() {
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a15);
+
+    camera = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 1000);
+    camera.position.set(10, 10, 10);
+    camera.lookAt(0, 0, 0);
+
+    renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0, 0);
+    controls.enableDamping = false;
+    controls.minDistance = 3;
+    controls.maxDistance = 50;
+
+    // ライト
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(10, 10, 10);
+    scene.add(directionalLight);
+
+    createGrid();
+    createVectorArrows();
+    createProjectionLines();
+    createParallelogram();
+    createAngleArcs();
+    createTransformControls();
+    setupSliderControls();
+    updateAllVectors();
+
+    window.addEventListener('resize', onWindowResize);
+    animate();
+  }
+
+  function createGrid() {
+    grid = new THREE.Group();
+    
+    const gridXY = new THREE.GridHelper(10, 10, 0x444444, 0x222222);
+    gridXY.rotation.x = Math.PI / 2;
+    grid.add(gridXY);
+
+    const gridXZ = new THREE.GridHelper(10, 10, 0x334444, 0x112222);
+    grid.add(gridXZ);
+
+    const gridYZ = new THREE.GridHelper(10, 10, 0x443344, 0x221122);
+    gridYZ.rotation.z = Math.PI / 2;
+    grid.add(gridYZ);
+
+    const axesHelper = new THREE.AxesHelper(6);
+    grid.add(axesHelper);
+
+    const origin = new THREE.Mesh(
+      new THREE.SphereGeometry(0.15, 16, 16),
+      new THREE.MeshBasicMaterial({color: 0xffff00})
+    );
+    grid.add(origin);
+
+    scene.add(grid);
+  }
+
+  function createArrow(color) {
+    const group = new THREE.Group();
+    group.userData.isArrow = true;
+
+    const shaftGeom = new THREE.CylinderGeometry(0.06, 0.06, 1, 16);
+    const shaftMat = new THREE.MeshStandardMaterial({
+      color: color,
+      transparent: false,
+      metalness: 0.3,
+      roughness: 0.6
+    });
+    const shaft = new THREE.Mesh(shaftGeom, shaftMat);
+    shaft.position.y = 0.5;
+    group.add(shaft);
+
+    const headGeom = new THREE.ConeGeometry(0.18, 0.4, 16);
+    const headMat = new THREE.MeshStandardMaterial({
+      color: color,
+      transparent: false,
+      metalness: 0.3,
+      roughness: 0.6
+    });
+    const head = new THREE.Mesh(headGeom, headMat);
+    head.position.y = 1.2;
+    group.add(head);
+
+    return group;
+  }
+
+  function createVectorArrows() {
+    vectorAArrow = createArrow(0x3366ff);
+    vectorAArrow.userData.vectorName = 'A';
+    scene.add(vectorAArrow);
+
+    vectorBArrow = createArrow(0xff3366);
+    vectorBArrow.userData.vectorName = 'B';
+    scene.add(vectorBArrow);
+
+    vectorCArrow = createArrow(0x33ff66);
+    vectorCArrow.userData.vectorName = 'C';
+    scene.add(vectorCArrow);
+
+    vectorALabel = createLabelSprite('A', '#5588ff');
+    vectorBLabel = createLabelSprite('B', '#ff5588');
+    vectorCLabel = createLabelSprite('C', '#55ff88');
+
+    scene.add(vectorALabel);
+    scene.add(vectorBLabel);
+    scene.add(vectorCLabel);
+    
+    // 角度表示用のラベルを作成
+    for(let i = 0; i < 3; i++){
+      const angleLabel = createAngleSprite('0°', '#ffff00');
+      scene.add(angleLabel);
+      angleLabels.push(angleLabel);
+    }
+  }
+
+  function createLabelSprite(text, color) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    ctx.font = 'bold 60px Arial';
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 64, 64);
+    const texture = new THREE.CanvasTexture(canvas);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: texture, transparent:true}));
+    sprite.scale.set(0.8, 0.8, 1);
+    return sprite;
+  }
+
+  function createAngleSprite(text, color) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    
+    // 背景（小さめ）
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(0, 0, 128, 64);
+    
+    // テキスト
+    ctx.font = 'bold 28px Arial';
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 64, 32);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    const sprite = new THREE.Sprite(new THREE.SpriteMaterial({map: texture, transparent:true}));
+    sprite.scale.set(0.8, 0.4, 1);
+    return sprite;
+  }
+
+  function updateAngleSprite(sprite, text) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(0, 0, 128, 64);
+    
+    ctx.font = 'bold 28px Arial';
+    ctx.fillStyle = '#ffff00';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 64, 32);
+    
+    sprite.material.map.dispose();
+    sprite.material.map = new THREE.CanvasTexture(canvas);
+    sprite.material.needsUpdate = true;
+  }
+
+  function createProjectionLines() {
+    // A→B投影
+    const lineAB = new THREE.Line(
+      new THREE.BufferGeometry(),
+      new THREE.LineBasicMaterial({color: 0x00ff00, transparent:true, opacity:0.6, linewidth: 2})
+    );
+    scene.add(lineAB);
+    projectionLines.push({line: lineAB, from: vecB, to: vecA});
+
+    // A→C投影
+    const lineAC = new THREE.Line(
+      new THREE.BufferGeometry(),
+      new THREE.LineBasicMaterial({color: 0x00ffff, transparent:true, opacity:0.6, linewidth: 2})
+    );
+    scene.add(lineAC);
+    projectionLines.push({line: lineAC, from: vecC, to: vecA});
+  }
+
+  function createAngleArcs() {
+    // 3つの角度円弧を作成（A-B, A-C, B-C）
+    for(let i = 0; i < 3; i++){
+      const arcGeometry = new THREE.BufferGeometry();
+      const arcMaterial = new THREE.LineBasicMaterial({
+        color: 0xffff00,
+        transparent: true,
+        opacity: 0.8,
+        linewidth: 2
+      });
+      const arc = new THREE.Line(arcGeometry, arcMaterial);
+      scene.add(arc);
+      angleArcs.push(arc);
+      
+      // 角度ラベルも作成
+      const angleLabel = createAngleSprite('0°', '#ffff00');
+      scene.add(angleLabel);
+      angleLabels.push(angleLabel);
+    }
+  }
+
+  function createAngleArc(v1, v2, radius, segments = 32) {
+    const angle = Math.acos(Math.max(-1, Math.min(1, v1.dot(v2) / (v1.length() * v2.length()))));
+    
+    if(angle < 0.01) return [];
+    
+    const points = [];
+    const v1Norm = v1.clone().normalize();
+    const v2Norm = v2.clone().normalize();
+    
+    // 回転軸を計算
+    const axis = new THREE.Vector3().crossVectors(v1Norm, v2Norm).normalize();
+    
+    // v1から始めて、v2に向かって回転
+    for(let i = 0; i <= segments; i++){
+      const t = i / segments;
+      const currentAngle = angle * t;
+      
+      const rotatedVec = v1Norm.clone().applyAxisAngle(axis, currentAngle);
+      const point = rotatedVec.multiplyScalar(radius);
+      points.push(point);
+    }
+    
+    return points;
+  }
+
+  function createParallelogram() {
+    // A, B, Cで作られる平行六面体の面を半透明で描画
+    parallelogram = new THREE.Group();
+    
+    // 面の頂点を定義
+    const createFace = (v1, v2, v3, v4, color) => {
+      const geometry = new THREE.BufferGeometry();
+      const vertices = new Float32Array([
+        ...v1.toArray(), ...v2.toArray(), ...v3.toArray(),
+        ...v1.toArray(), ...v3.toArray(), ...v4.toArray()
+      ]);
+      geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+      const material = new THREE.MeshBasicMaterial({
+        color: color,
+        transparent: true,
+        opacity: 0.2,
+        side: THREE.DoubleSide
+      });
+      return new THREE.Mesh(geometry, material);
+    };
+
+    parallelogram.userData.faces = [];
+    scene.add(parallelogram);
+  }
+
+  function updateParallelogram() {
+    // 既存の面を削除
+    parallelogram.children.forEach(child => {
+      child.geometry.dispose();
+      child.material.dispose();
+    });
+    parallelogram.clear();
+
+    const origin = new THREE.Vector3(0, 0, 0);
+    const pA = vecA.clone();
+    const pB = vecB.clone();
+    const pC = vecC.clone();
+    const pAB = vecA.clone().add(vecB);
+    const pAC = vecA.clone().add(vecC);
+    const pBC = vecB.clone().add(vecC);
+    const pABC = vecA.clone().add(vecB).add(vecC);
+
+    // 面1: O-A-AB-B (青赤の面)
+    parallelogram.add(createFace(origin, pA, pAB, pB, 0x6633cc));
+    
+    // 面2: O-A-AC-C (青緑の面)
+    parallelogram.add(createFace(origin, pA, pAC, pC, 0x33cc66));
+    
+    // 面3: O-B-BC-C (赤緑の面)
+    parallelogram.add(createFace(origin, pB, pBC, pC, 0xcc6633));
+    
+    // 面4: A-AB-ABC-AC (上面)
+    parallelogram.add(createFace(pA, pAB, pABC, pAC, 0x9966cc));
+    
+    // 面5: B-AB-ABC-BC (側面)
+    parallelogram.add(createFace(pB, pAB, pABC, pBC, 0xcc9966));
+    
+    // 面6: C-AC-ABC-BC (側面)
+    parallelogram.add(createFace(pC, pAC, pABC, pBC, 0x66cc99));
+  }
+
+  function createFace(v1, v2, v3, v4, color) {
+    const geometry = new THREE.BufferGeometry();
+    const vertices = new Float32Array([
+      ...v1.toArray(), ...v2.toArray(), ...v3.toArray(),
+      ...v1.toArray(), ...v3.toArray(), ...v4.toArray()
+    ]);
+    geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
+    const material = new THREE.MeshBasicMaterial({
+      color: color,
+      transparent: true,
+      opacity: 0.25,
+      side: THREE.DoubleSide
+    });
+    return new THREE.Mesh(geometry, material);
+  }
+
+  function updateArrow(arrow, vec) {
+    const len = vec.length();
+    if(len < 0.01){
+      arrow.visible = false;
+      return;
+    }
+    arrow.visible = true;
+
+    // 矢印の位置をベクトルの先端に設定（原点からのベクトル）
+    arrow.position.set(0, 0, 0);
+
+    const dir = vec.clone().normalize();
+    const axis = new THREE.Vector3(0, 1, 0);
+    const quat = new THREE.Quaternion();
+    quat.setFromUnitVectors(axis, dir);
+    arrow.quaternion.copy(quat);
+
+    const shaft = arrow.children[0];
+    const head = arrow.children[1];
+
+    shaft.scale.set(1, len, 1);
+    shaft.position.set(0, len / 2, 0);
+    head.position.set(0, len + 0.2, 0);
+    
+    // ドラッグ用のヘルパー：矢印の先端位置を記録
+    arrow.userData.tipPosition = vec.clone();
+  }
+
+  function updateProjectionLine(projData) {
+    const {line, from, to} = projData;
+    
+    if(to.length() < 0.01 || from.length() < 0.01){
+      line.visible = false;
+      return;
+    }
+    line.visible = true;
+
+    const toNorm = to.clone().normalize();
+    const projLength = from.dot(toNorm);
+    const projVec = toNorm.clone().multiplyScalar(projLength);
+
+    const points = [from.clone(), projVec.clone()];
+    line.geometry.setFromPoints(points);
+
+    const dotProd = from.dot(to);
+    line.material.color.set(dotProd >= 0 ? 0x00ff00 : 0xff0000);
+  }
+
+  function updateAllVectors() {
+    updateArrow(vectorAArrow, vecA);
+    updateArrow(vectorBArrow, vecB);
+    updateArrow(vectorCArrow, vecC);
+
+    vectorALabel.position.copy(vecA).add(new THREE.Vector3(0.4, 0.4, 0.4));
+    vectorBLabel.position.copy(vecB).add(new THREE.Vector3(0.4, 0.4, 0.4));
+    vectorCLabel.position.copy(vecC).add(new THREE.Vector3(0.4, 0.4, 0.4));
+
+    projectionLines[0].from = vecB;
+    projectionLines[0].to = vecA;
+    projectionLines[1].from = vecC;
+    projectionLines[1].to = vecA;
+    
+    projectionLines.forEach(proj => updateProjectionLine(proj));
+    updateParallelogram();
+    updateAngleDisplays();
+    updateCalculations();
+  }
+
+  function updateAngleDisplays() {
+    const calcAngle = (v1, v2) => {
+      const m1 = v1.length();
+      const m2 = v2.length();
+      if(m1 < 0.001 || m2 < 0.001) return 0;
+      const cosAngle = v1.dot(v2) / (m1 * m2);
+      const clamped = Math.max(-1, Math.min(1, cosAngle));
+      return Math.acos(clamped) * 180 / Math.PI;
+    };
+
+    const radius = 0.5; // 円弧の半径
+
+    // A-B間の角度
+    const angleAB = calcAngle(vecA, vecB);
+    if(vecA.length() > 0.1 && vecB.length() > 0.1 && angleAB > 1){
+      const arcPoints = createAngleArc(vecA, vecB, radius);
+      angleArcs[0].geometry.setFromPoints(arcPoints);
+      angleArcs[0].visible = true;
+      
+      // ラベル位置：円弧の中点
+      const midAngle = Math.acos(Math.max(-1, Math.min(1, vecA.dot(vecB) / (vecA.length() * vecB.length())))) / 2;
+      const axis = new THREE.Vector3().crossVectors(vecA.clone().normalize(), vecB.clone().normalize()).normalize();
+      const labelPos = vecA.clone().normalize().applyAxisAngle(axis, midAngle).multiplyScalar(radius * 1.5);
+      
+      angleLabels[0].position.copy(labelPos);
+      updateAngleSprite(angleLabels[0], `${angleAB.toFixed(1)}°`);
+      angleLabels[0].visible = true;
+    } else {
+      angleArcs[0].visible = false;
+      angleLabels[0].visible = false;
+    }
+
+    // A-C間の角度
+    const angleAC = calcAngle(vecA, vecC);
+    if(vecA.length() > 0.1 && vecC.length() > 0.1 && angleAC > 1){
+      const arcPoints = createAngleArc(vecA, vecC, radius * 0.8);
+      angleArcs[1].geometry.setFromPoints(arcPoints);
+      angleArcs[1].material.color.set(0x00ffff);
+      angleArcs[1].visible = true;
+      
+      const midAngle = Math.acos(Math.max(-1, Math.min(1, vecA.dot(vecC) / (vecA.length() * vecC.length())))) / 2;
+      const axis = new THREE.Vector3().crossVectors(vecA.clone().normalize(), vecC.clone().normalize()).normalize();
+      const labelPos = vecA.clone().normalize().applyAxisAngle(axis, midAngle).multiplyScalar(radius * 1.3);
+      
+      angleLabels[1].position.copy(labelPos);
+      updateAngleSprite(angleLabels[1], `${angleAC.toFixed(1)}°`);
+      angleLabels[1].visible = true;
+    } else {
+      angleArcs[1].visible = false;
+      angleLabels[1].visible = false;
+    }
+
+    // B-C間の角度
+    const angleBC = calcAngle(vecB, vecC);
+    if(vecB.length() > 0.1 && vecC.length() > 0.1 && angleBC > 1){
+      const arcPoints = createAngleArc(vecB, vecC, radius * 0.6);
+      angleArcs[2].geometry.setFromPoints(arcPoints);
+      angleArcs[2].material.color.set(0xff00ff);
+      angleArcs[2].visible = true;
+      
+      const midAngle = Math.acos(Math.max(-1, Math.min(1, vecB.dot(vecC) / (vecB.length() * vecC.length())))) / 2;
+      const axis = new THREE.Vector3().crossVectors(vecB.clone().normalize(), vecC.clone().normalize()).normalize();
+      const labelPos = vecB.clone().normalize().applyAxisAngle(axis, midAngle).multiplyScalar(radius * 1.0);
+      
+      angleLabels[2].position.copy(labelPos);
+      updateAngleSprite(angleLabels[2], `${angleBC.toFixed(1)}°`);
+      angleLabels[2].visible = true;
+    } else {
+      angleArcs[2].visible = false;
+      angleLabels[2].visible = false;
+    }
+  }
+
+  function updateCalculations() {
+    const dotAB = vecA.dot(vecB);
+    const dotAC = vecA.dot(vecC);
+    const dotBC = vecB.dot(vecC);
+    const magA = vecA.length();
+    const magB = vecB.length();
+    const magC = vecC.length();
+
+    const calcAngle = (v1, v2) => {
+      const m1 = v1.length();
+      const m2 = v2.length();
+      if(m1 < 0.001 || m2 < 0.001) return 0;
+      const cosAngle = v1.dot(v2) / (m1 * m2);
+      const clamped = Math.max(-1, Math.min(1, cosAngle));
+      return (Math.acos(clamped) * 180 / Math.PI).toFixed(1);
+    };
+
+    document.getElementById('dotProductAB').textContent = dotAB.toFixed(2);
+    document.getElementById('dotProductAC').textContent = dotAC.toFixed(2);
+    document.getElementById('dotProductBC').textContent = dotBC.toFixed(2);
+    document.getElementById('magnitudeA').textContent = magA.toFixed(2);
+    document.getElementById('magnitudeB').textContent = magB.toFixed(2);
+    document.getElementById('magnitudeC').textContent = magC.toFixed(2);
+    document.getElementById('angleAB').textContent = calcAngle(vecA, vecB) + '°';
+    document.getElementById('angleAC').textContent = calcAngle(vecA, vecC) + '°';
+    document.getElementById('angleBC').textContent = calcAngle(vecB, vecC) + '°';
+  }
+
+  function createTransformControls() {
+    transformControl = new THREE.TransformControls(camera, renderer.domElement);
+    transformControl.setMode('translate');
+    transformControl.setSpace('world');
+    transformControl.showX = true;
+    transformControl.showY = true;
+    transformControl.showZ = true;
+    
+    // 軸の制限を解除（自由に動かせるようにする）
+    transformControl.setTranslationSnap(null);
+    transformControl.setRotationSnap(null);
+    transformControl.setScaleSnap(null);
+    
+    // ドラッグ中はOrbitControlsを無効化
+    transformControl.addEventListener('dragging-changed', (event) => {
+      controls.enabled = !event.value;
+    });
+    
+    // ドラッグ中の位置更新
+    transformControl.addEventListener('objectChange', () => {
+      if(transformControl.object){
+        const pos = transformControl.object.position.clone();
+        const name = transformControl.object.userData.vectorName;
+        
+        if(name === 'A'){
+          vecA.copy(pos);
+          updateSliderFromVector('A', vecA);
+        } else if(name === 'B'){
+          vecB.copy(pos);
+          updateSliderFromVector('B', vecB);
+        } else if(name === 'C'){
+          vecC.copy(pos);
+          updateSliderFromVector('C', vecC);
+        }
+        updateAllVectors();
+      }
+    });
+    
+    scene.add(transformControl);
+    transformControl.visible = false;
+  }
+
+  function updateSliderFromVector(name, vec) {
+    document.getElementById(`vector${name}X`).value = vec.x.toFixed(1);
+    document.getElementById(`vector${name}Y`).value = vec.y.toFixed(1);
+    document.getElementById(`vector${name}Z`).value = vec.z.toFixed(1);
+    document.getElementById(`vector${name}X-value`).textContent = vec.x.toFixed(1);
+    document.getElementById(`vector${name}Y-value`).textContent = vec.y.toFixed(1);
+    document.getElementById(`vector${name}Z-value`).textContent = vec.z.toFixed(1);
+  }
+
+  function setupSliderControls() {
+    const sliders = [
+      {id: 'vectorAX', vec: vecA, key:'x', labelId:'vectorAX-value'},
+      {id: 'vectorAY', vec: vecA, key:'y', labelId:'vectorAY-value'},
+      {id: 'vectorAZ', vec: vecA, key:'z', labelId:'vectorAZ-value'},
+      {id: 'vectorBX', vec: vecB, key:'x', labelId:'vectorBX-value'},
+      {id: 'vectorBY', vec: vecB, key:'y', labelId:'vectorBY-value'},
+      {id: 'vectorBZ', vec: vecB, key:'z', labelId:'vectorBZ-value'},
+      {id: 'vectorCX', vec: vecC, key:'x', labelId:'vectorCX-value'},
+      {id: 'vectorCY', vec: vecC, key:'y', labelId:'vectorCY-value'},
+      {id: 'vectorCZ', vec: vecC, key:'z', labelId:'vectorCZ-value'},
+    ];
+
+    sliders.forEach(({id, vec, key, labelId}) => {
+      const input = document.getElementById(id);
+      const label = document.getElementById(labelId);
+      input.addEventListener('input', () => {
+        vec[key] = parseFloat(input.value);
+        label.textContent = parseFloat(input.value).toFixed(1);
+        updateAllVectors();
+      });
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      vecA.set(3, 2, 1);
+      vecB.set(2, 3, 0.5);
+      vecC.set(1, 1, 3);
+      sliders.forEach(({id, vec, key, labelId}) => {
+        document.getElementById(id).value = vec[key];
+        document.getElementById(labelId).textContent = vec[key].toFixed(1);
+      });
+      updateAllVectors();
+    });
+
+    document.getElementById('toggleGridBtn').addEventListener('click', () => {
+      grid.visible = !grid.visible;
+    });
+
+    document.getElementById('togglePlaneBtn').addEventListener('click', () => {
+      parallelogram.visible = !parallelogram.visible;
+    });
+
+    document.getElementById('toggleDragBtn').addEventListener('click', () => {
+      isDragMode = !isDragMode;
+      document.getElementById('modeInfo').style.display = isDragMode ? 'block' : 'none';
+      if(!isDragMode){
+        transformControl.detach();
+        transformControl.visible = false;
+      }
+    });
+
+    renderer.domElement.addEventListener('click', (event) => {
+      if(!isDragMode) return;
+      
+      const mouse = new THREE.Vector2();
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera);
+
+      const arrows = [vectorAArrow, vectorBArrow, vectorCArrow];
+      const intersects = raycaster.intersectObjects(arrows, true);
+
+      if(intersects.length > 0){
+        let obj = intersects[0].object;
+        while(obj.parent && !obj.userData.isArrow){
+          obj = obj.parent;
+        }
+        if(obj.userData.isArrow){
+          // 矢印の先端位置にTransformControlsを配置
+          const tipPos = obj.userData.tipPosition || obj.position;
+          
+          transformControl.attach(obj);
+          transformControl.visible = true;
+          
+          // すべての軸を有効にして自由に動かせるようにする
+          transformControl.showX = true;
+          transformControl.showY = true;
+          transformControl.showZ = true;
+        }
+      } else {
+        transformControl.detach();
+        transformControl.visible = false;
+      }
+    });
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+
+  init();
+</script>
+
+</body>
+</html>
