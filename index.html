@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/TransformControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/webxr/VRButton.js"></script>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -61,6 +62,8 @@
     font-weight: 700;
     border-bottom: 1px solid #444;
     padding-bottom: 4px;
+    display: flex;
+    align-items: center;
   }
   .slider-container {
     margin-bottom: 8px;
@@ -104,6 +107,24 @@
   .value { color: #0af; font-weight: 600; }
   .value.red { color: #f55; }
   .value.green { color: #5f5; }
+  .value-input {
+    width: 60px;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #0af;
+    font-weight: 600;
+    font-size: 13px;
+    text-align: right;
+  }
+  .value-input.red { color: #f55; }
+  .value-input.green { color: #5f5; }
+  .value-input:focus {
+    outline: none;
+    border-color: #09f;
+    background: rgba(255, 255, 255, 0.15);
+  }
   button {
     width: 100%;
     padding: 10px;
@@ -118,8 +139,6 @@
     transition: background 0.3s ease;
   }
   button:hover { background: #06a; }
-  #vrButton { background: #f63; }
-  #vrButton:hover { background: #d52; }
   canvas { display: block; }
   
   .mode-info {
@@ -129,6 +148,14 @@
     margin: 8px 0;
     font-size: 13px;
   }
+  
+  .vr-info {
+    background: rgba(255, 100, 100, 0.9);
+    padding: 8px 12px;
+    border-radius: 5px;
+    margin: 8px 0;
+    font-size: 12px;
+  }
 </style>
 </head>
 <body>
@@ -136,16 +163,29 @@
 <div id="info">
   <h3>🧮 3Dベクトル学習</h3>
   <div class="calc-row">
-    <span class="calc-label">A·B (内積):</span>
+    <span class="calc-label">A×B (内積):</span>
     <span class="calc-value" id="dotProductAB">0.00</span>
   </div>
   <div class="calc-row">
-    <span class="calc-label">A·C (内積):</span>
+    <span class="calc-label">A×C (内積):</span>
     <span class="calc-value" id="dotProductAC">0.00</span>
   </div>
   <div class="calc-row">
-    <span class="calc-label">B·C (内積):</span>
+    <span class="calc-label">B×C (内積):</span>
     <span class="calc-value" id="dotProductBC">0.00</span>
+  </div>
+  <hr style="border-color: #444; margin: 10px 0;">
+  <div class="calc-row">
+    <span class="calc-label">|A×B| (外積):</span>
+    <span class="calc-value" id="crossProductAB">0.00</span>
+  </div>
+  <div class="calc-row">
+    <span class="calc-label">|A×C| (外積):</span>
+    <span class="calc-value" id="crossProductAC">0.00</span>
+  </div>
+  <div class="calc-row">
+    <span class="calc-label">|B×C| (外積):</span>
+    <span class="calc-value" id="crossProductBC">0.00</span>
   </div>
   <hr style="border-color: #444; margin: 10px 0;">
   <div class="calc-row">
@@ -173,56 +213,65 @@
     <span class="calc-label">∠(B,C):</span>
     <span class="calc-value" id="angleBC">0.0°</span>
   </div>
-  <div class="mode-info" id="modeInfo" style="display:none;">
-    🎯 矢印をクリックしてドラッグ！
+  <div class="vr-info" id="vrInfo" style="display:none;">
+      🥽 VRモード起動中
   </div>
 </div>
 
 <div id="controls">
-  <h4>ベクトル A (青)</h4>
+  <h4>
+    <input type="checkbox" id="toggleVectorA" checked style="margin-right: 8px; cursor: pointer; width: 18px; height: 18px; vertical-align: middle;">
+    ベクトル A (青)
+  </h4>
   <div class="slider-container">
-    <label>X: <span class="value" id="vectorAX-value">3.0</span></label>
-    <input type="range" id="vectorAX" min="-5" max="5" step="0.1" value="3" />
+    <label>X: <input type="number" class="value-input" id="vectorAX-value" value="3.0" min="-10" max="10" step="0.1"></label>
+    <input type="range" id="vectorAX" min="-10" max="10" step="0.1" value="3" />
   </div>
   <div class="slider-container">
-    <label>Y: <span class="value" id="vectorAY-value">2.0</span></label>
-    <input type="range" id="vectorAY" min="-5" max="5" step="0.1" value="2" />
+    <label>Y: <input type="number" class="value-input" id="vectorAY-value" value="2.0" min="-10" max="10" step="0.1"></label>
+    <input type="range" id="vectorAY" min="-10" max="10" step="0.1" value="2" />
   </div>
   <div class="slider-container">
-    <label>Z: <span class="value" id="vectorAZ-value">1.0</span></label>
-    <input type="range" id="vectorAZ" min="-5" max="5" step="0.1" value="1" />
-  </div>
-
-  <h4>ベクトル B (赤)</h4>
-  <div class="slider-container">
-    <label>X: <span class="value red" id="vectorBX-value">2.0</span></label>
-    <input type="range" id="vectorBX" min="-5" max="5" step="0.1" value="2" />
-  </div>
-  <div class="slider-container">
-    <label>Y: <span class="value red" id="vectorBY-value">3.0</span></label>
-    <input type="range" id="vectorBY" min="-5" max="5" step="0.1" value="3" />
-  </div>
-  <div class="slider-container">
-    <label>Z: <span class="value red" id="vectorBZ-value">0.5</span></label>
-    <input type="range" id="vectorBZ" min="-5" max="5" step="0.1" value="0.5" />
+    <label>Z: <input type="number" class="value-input" id="vectorAZ-value" value="1.0" min="-10" max="10" step="0.1"></label>
+    <input type="range" id="vectorAZ" min="-10" max="10" step="0.1" value="1" />
   </div>
 
-  <h4>ベクトル C (緑)</h4>
+  <h4>
+    <input type="checkbox" id="toggleVectorB" checked style="margin-right: 8px; cursor: pointer; width: 18px; height: 18px; vertical-align: middle;">
+    ベクトル B (赤)
+  </h4>
   <div class="slider-container">
-    <label>X: <span class="value green" id="vectorCX-value">1.0</span></label>
-    <input type="range" id="vectorCX" min="-5" max="5" step="0.1" value="1" />
+    <label>X: <input type="number" class="value-input red" id="vectorBX-value" value="2.0" min="-10" max="10" step="0.1"></label>
+    <input type="range" id="vectorBX" min="-10" max="10" step="0.1" value="2" />
   </div>
   <div class="slider-container">
-    <label>Y: <span class="value green" id="vectorCY-value">1.0</span></label>
-    <input type="range" id="vectorCY" min="-5" max="5" step="0.1" value="1" />
+    <label>Y: <input type="number" class="value-input red" id="vectorBY-value" value="3.0" min="-10" max="10" step="0.1"></label>
+    <input type="range" id="vectorBY" min="-10" max="10" step="0.1" value="3" />
   </div>
   <div class="slider-container">
-    <label>Z: <span class="value green" id="vectorCZ-value">3.0</span></label>
-    <input type="range" id="vectorCZ" min="-5" max="5" step="0.1" value="3" />
+    <label>Z: <input type="number" class="value-input red" id="vectorBZ-value" value="0.5" min="-10" max="10" step="0.1"></label>
+    <input type="range" id="vectorBZ" min="-10" max="10" step="0.1" value="0.5" />
   </div>
 
-  <button id="toggleDragBtn">🎯 ドラッグモード切替</button>
+  <h4>
+    <input type="checkbox" id="toggleVectorC" checked style="margin-right: 8px; cursor: pointer; width: 18px; height: 18px; vertical-align: middle;">
+    ベクトル C (緑)
+  </h4>
+  <div class="slider-container">
+    <label>X: <input type="number" class="value-input green" id="vectorCX-value" value="1.0" min="-10" max="10" step="0.1"></label>
+    <input type="range" id="vectorCX" min="-10" max="10" step="0.1" value="1" />
+  </div>
+  <div class="slider-container">
+    <label>Y: <input type="number" class="value-input green" id="vectorCY-value" value="1.0" min="-10" max="10" step="0.1"></label>
+    <input type="range" id="vectorCY" min="-10" max="10" step="0.1" value="1" />
+  </div>
+  <div class="slider-container">
+    <label>Z: <input type="number" class="value-input green" id="vectorCZ-value" value="3.0" min="-10" max="10" step="0.1"></label>
+    <input type="range" id="vectorCZ" min="-10" max="10" step="0.1" value="3" />
+  </div>
+
   <button id="togglePlaneBtn">📐 平面表示切替</button>
+  <button id="toggleCrossBtn">✖️ 外積ベクトル切替</button>
   <button id="resetBtn">リセット</button>
   <button id="toggleGridBtn">グリッド切替</button>
 </div>
@@ -231,16 +280,20 @@
   let scene, camera, renderer, controls;
   let vectorAArrow, vectorBArrow, vectorCArrow;
   let vectorALabel, vectorBLabel, vectorCLabel;
-  let angleLabels = []; // 角度表示用のスプライト
-  let angleArcs = []; // 角度の円弧表示
+  let crossProductABArrow, crossProductACArrow, crossProductBCArrow;
+  let angleLabels = [];
+  let angleArcs = [];
   let projectionLines = [];
   let grid, parallelogram;
   let transformControl;
-  let isDragMode = false;
+  let isVRMode = false;
   
   let vecA = new THREE.Vector3(3, 2, 1);
   let vecB = new THREE.Vector3(2, 3, 0.5);
   let vecC = new THREE.Vector3(1, 1, 3);
+
+  let controller1, controller2;
+  let controllerGrip1, controllerGrip2;
 
   function init() {
     scene = new THREE.Scene();
@@ -252,49 +305,218 @@
 
     renderer = new THREE.WebGLRenderer({antialias: true, alpha: true});
     renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.xr.enabled = true;
     document.body.appendChild(renderer.domElement);
+
+    try {
+      const vrButton = VRButton.createButton(renderer);
+      vrButton.style.position = 'absolute';
+      vrButton.style.bottom = '20px';
+      vrButton.style.left = '50%';
+      vrButton.style.transform = 'translateX(-50%)';
+      vrButton.style.zIndex = '999';
+      document.body.appendChild(vrButton);
+
+      renderer.xr.addEventListener('sessionstart', () => {
+        isVRMode = true;
+        document.getElementById('vrInfo').style.display = 'block';
+      });
+
+      renderer.xr.addEventListener('sessionend', () => {
+        isVRMode = false;
+        document.getElementById('vrInfo').style.display = 'none';
+      });
+    } catch(e) {
+      console.warn('VR not available:', e);
+    }
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 0, 0);
     controls.enableDamping = false;
     controls.minDistance = 3;
     controls.maxDistance = 50;
+    // ターゲットを原点に固定（パンニングを無効化することで確実に）
+    controls.enablePan = true; // パンは有効だが、後で制約をかける
 
-    // ライト
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
     directionalLight.position.set(10, 10, 10);
     scene.add(directionalLight);
 
+    setupVRControllers();
     createGrid();
     createVectorArrows();
+    createCrossProductArrows();
     createProjectionLines();
     createParallelogram();
     createAngleArcs();
     createTransformControls();
     setupSliderControls();
+    setupDirectArrowDragging();
     updateAllVectors();
 
     window.addEventListener('resize', onWindowResize);
-    animate();
+    renderer.setAnimationLoop(animate);
+  }
+
+  function setupDirectArrowDragging() {
+    renderer.domElement.addEventListener('pointerdown', (event) => {
+      const mouse = new THREE.Vector2();
+      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera);
+
+      // 矢印とヘルパー球の両方をチェック
+      const arrows = [vectorAArrow, vectorBArrow, vectorCArrow];
+      const helpers = arrows.map(arrow => arrow.userData.helper).filter(h => h);
+      const allObjects = [...arrows, ...helpers];
+      
+      const intersects = raycaster.intersectObjects(allObjects, true);
+
+      if(intersects.length > 0){
+        // クリックされたオブジェクトを特定
+        let obj = intersects[0].object;
+        let targetHelper = null;
+
+        // ヘルパー球が直接クリックされた場合
+        if(obj.userData.isHelper){
+          targetHelper = obj;
+        } else {
+          // 矢印がクリックされた場合、親矢印を探してそのヘルパーを取得
+          while(obj.parent && !obj.userData.isArrow){
+            obj = obj.parent;
+          }
+          if(obj.userData.isArrow && obj.userData.helper){
+            targetHelper = obj.userData.helper;
+          }
+        }
+
+        if(targetHelper){
+          controls.enabled = false;
+          transformControl.attach(targetHelper);
+          transformControl.visible = true;
+          // ターゲットを原点に固定
+          controls.target.set(0, 0, 0);
+          controls.update();
+          event.stopPropagation();
+        }
+      } else {
+        // 背景をクリックしたらデタッチ
+        if(!transformControl.dragging){
+          transformControl.detach();
+          transformControl.visible = false;
+          controls.enabled = true;
+          // ターゲットを確実に原点に戻す
+          controls.target.set(0, 0, 0);
+          controls.update();
+        }
+      }
+    });
+  }
+
+  function setupVRControllers() {
+    controller1 = renderer.xr.getController(0);
+    controller1.addEventListener('selectstart', onSelectStart);
+    controller1.addEventListener('selectend', onSelectEnd);
+    scene.add(controller1);
+
+    controller2 = renderer.xr.getController(1);
+    controller2.addEventListener('selectstart', onSelectStart);
+    controller2.addEventListener('selectend', onSelectEnd);
+    scene.add(controller2);
+
+    controllerGrip1 = renderer.xr.getControllerGrip(0);
+    scene.add(controllerGrip1);
+
+    controllerGrip2 = renderer.xr.getControllerGrip(1);
+    scene.add(controllerGrip2);
+
+    const geometry = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(0, 0, -1)
+    ]);
+
+    const lineMaterial = new THREE.LineBasicMaterial({color: 0xffffff});
+    const line1 = new THREE.Line(geometry, lineMaterial);
+    line1.scale.z = 5;
+    controller1.add(line1);
+
+    const line2 = new THREE.Line(geometry.clone(), lineMaterial.clone());
+    line2.scale.z = 5;
+    controller2.add(line2);
+  }
+
+  function onSelectStart(event) {
+    const controller = event.target;
+    const tempMatrix = new THREE.Matrix4();
+    tempMatrix.identity().extractRotation(controller.matrixWorld);
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+    raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+
+    const arrows = [vectorAArrow, vectorBArrow, vectorCArrow];
+    const intersects = raycaster.intersectObjects(arrows, true);
+
+    if(intersects.length > 0) {
+      let obj = intersects[0].object;
+      while(obj.parent && !obj.userData.isArrow){
+        obj = obj.parent;
+      }
+      if(obj.userData.isArrow){
+        controller.userData.selected = obj;
+        controller.userData.vectorName = obj.userData.vectorName;
+      }
+    }
+  }
+
+  function onSelectEnd(event) {
+    const controller = event.target;
+    controller.userData.selected = undefined;
+    controller.userData.vectorName = undefined;
+  }
+
+  function updateVRControllers() {
+    [controller1, controller2].forEach(controller => {
+      if(controller.userData.selected && controller.userData.vectorName) {
+        const origin = new THREE.Vector3();
+        origin.setFromMatrixPosition(controller.matrixWorld);
+        
+        const name = controller.userData.vectorName;
+        if(name === 'A'){
+          vecA.copy(origin);
+          updateSliderFromVector('A', vecA);
+        } else if(name === 'B'){
+          vecB.copy(origin);
+          updateSliderFromVector('B', vecB);
+        } else if(name === 'C'){
+          vecC.copy(origin);
+          updateSliderFromVector('C', vecC);
+        }
+        updateAllVectors();
+      }
+    });
   }
 
   function createGrid() {
     grid = new THREE.Group();
     
-    const gridXY = new THREE.GridHelper(10, 10, 0x444444, 0x222222);
+    const gridXY = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
     gridXY.rotation.x = Math.PI / 2;
     grid.add(gridXY);
 
-    const gridXZ = new THREE.GridHelper(10, 10, 0x334444, 0x112222);
+    const gridXZ = new THREE.GridHelper(20, 20, 0x334444, 0x112222);
     grid.add(gridXZ);
 
-    const gridYZ = new THREE.GridHelper(10, 10, 0x443344, 0x221122);
+    const gridYZ = new THREE.GridHelper(20, 20, 0x443344, 0x221122);
     gridYZ.rotation.z = Math.PI / 2;
     grid.add(gridYZ);
 
-    const axesHelper = new THREE.AxesHelper(6);
+    const axesHelper = new THREE.AxesHelper(12);
     grid.add(axesHelper);
 
     const origin = new THREE.Mesh(
@@ -313,7 +535,6 @@
     const shaftGeom = new THREE.CylinderGeometry(0.06, 0.06, 1, 16);
     const shaftMat = new THREE.MeshStandardMaterial({
       color: color,
-      transparent: false,
       metalness: 0.3,
       roughness: 0.6
     });
@@ -324,7 +545,6 @@
     const headGeom = new THREE.ConeGeometry(0.18, 0.4, 16);
     const headMat = new THREE.MeshStandardMaterial({
       color: color,
-      transparent: false,
       metalness: 0.3,
       roughness: 0.6
     });
@@ -355,13 +575,56 @@
     scene.add(vectorALabel);
     scene.add(vectorBLabel);
     scene.add(vectorCLabel);
+
+    // 矢印の先端にドラッグ可能な球を追加
+    const helperGeom = new THREE.SphereGeometry(0.3, 16, 16);
     
-    // 角度表示用のラベルを作成
-    for(let i = 0; i < 3; i++){
-      const angleLabel = createAngleSprite('0°', '#ffff00');
-      scene.add(angleLabel);
-      angleLabels.push(angleLabel);
-    }
+    const helperA = new THREE.Mesh(helperGeom, new THREE.MeshBasicMaterial({
+      color: 0x3366ff,
+      transparent: true,
+      opacity: 0.5
+    }));
+    helperA.userData.vectorName = 'A';
+    helperA.userData.isHelper = true;
+    scene.add(helperA);
+    vectorAArrow.userData.helper = helperA;
+
+    const helperB = new THREE.Mesh(helperGeom, new THREE.MeshBasicMaterial({
+      color: 0xff3366,
+      transparent: true,
+      opacity: 0.5
+    }));
+    helperB.userData.vectorName = 'B';
+    helperB.userData.isHelper = true;
+    scene.add(helperB);
+    vectorBArrow.userData.helper = helperB;
+
+    const helperC = new THREE.Mesh(helperGeom, new THREE.MeshBasicMaterial({
+      color: 0x33ff66,
+      transparent: true,
+      opacity: 0.5
+    }));
+    helperC.userData.vectorName = 'C';
+    helperC.userData.isHelper = true;
+    scene.add(helperC);
+    vectorCArrow.userData.helper = helperC;
+  }
+
+  function createCrossProductArrows() {
+    // A×B (黄色)
+    crossProductABArrow = createArrow(0xffff00);
+    crossProductABArrow.userData.vectorName = 'A×B';
+    scene.add(crossProductABArrow);
+
+    // A×C (シアン)
+    crossProductACArrow = createArrow(0x00ffff);
+    crossProductACArrow.userData.vectorName = 'A×C';
+    scene.add(crossProductACArrow);
+
+    // B×C (マゼンタ)
+    crossProductBCArrow = createArrow(0xff00ff);
+    crossProductBCArrow.userData.vectorName = 'B×C';
+    scene.add(crossProductBCArrow);
   }
 
   function createLabelSprite(text, color) {
@@ -386,11 +649,9 @@
     canvas.height = 64;
     const ctx = canvas.getContext('2d');
     
-    // 背景（小さめ）
     ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
     ctx.fillRect(0, 0, 128, 64);
     
-    // テキスト
     ctx.font = 'bold 28px Arial';
     ctx.fillStyle = color;
     ctx.textAlign = 'center';
@@ -424,38 +685,33 @@
   }
 
   function createProjectionLines() {
-    // A→B投影
     const lineAB = new THREE.Line(
       new THREE.BufferGeometry(),
-      new THREE.LineBasicMaterial({color: 0x00ff00, transparent:true, opacity:0.6, linewidth: 2})
+      new THREE.LineBasicMaterial({color: 0x00ff00, transparent:true, opacity:0.6})
     );
     scene.add(lineAB);
     projectionLines.push({line: lineAB, from: vecB, to: vecA});
 
-    // A→C投影
     const lineAC = new THREE.Line(
       new THREE.BufferGeometry(),
-      new THREE.LineBasicMaterial({color: 0x00ffff, transparent:true, opacity:0.6, linewidth: 2})
+      new THREE.LineBasicMaterial({color: 0x00ffff, transparent:true, opacity:0.6})
     );
     scene.add(lineAC);
     projectionLines.push({line: lineAC, from: vecC, to: vecA});
   }
 
   function createAngleArcs() {
-    // 3つの角度円弧を作成（A-B, A-C, B-C）
     for(let i = 0; i < 3; i++){
       const arcGeometry = new THREE.BufferGeometry();
       const arcMaterial = new THREE.LineBasicMaterial({
         color: 0xffff00,
         transparent: true,
-        opacity: 0.8,
-        linewidth: 2
+        opacity: 0.8
       });
       const arc = new THREE.Line(arcGeometry, arcMaterial);
       scene.add(arc);
       angleArcs.push(arc);
       
-      // 角度ラベルも作成
       const angleLabel = createAngleSprite('0°', '#ffff00');
       scene.add(angleLabel);
       angleLabels.push(angleLabel);
@@ -470,50 +726,24 @@
     const points = [];
     const v1Norm = v1.clone().normalize();
     const v2Norm = v2.clone().normalize();
-    
-    // 回転軸を計算
     const axis = new THREE.Vector3().crossVectors(v1Norm, v2Norm).normalize();
     
-    // v1から始めて、v2に向かって回転
     for(let i = 0; i <= segments; i++){
       const t = i / segments;
       const currentAngle = angle * t;
-      
       const rotatedVec = v1Norm.clone().applyAxisAngle(axis, currentAngle);
-      const point = rotatedVec.multiplyScalar(radius);
-      points.push(point);
+      points.push(rotatedVec.multiplyScalar(radius));
     }
     
     return points;
   }
 
   function createParallelogram() {
-    // A, B, Cで作られる平行六面体の面を半透明で描画
     parallelogram = new THREE.Group();
-    
-    // 面の頂点を定義
-    const createFace = (v1, v2, v3, v4, color) => {
-      const geometry = new THREE.BufferGeometry();
-      const vertices = new Float32Array([
-        ...v1.toArray(), ...v2.toArray(), ...v3.toArray(),
-        ...v1.toArray(), ...v3.toArray(), ...v4.toArray()
-      ]);
-      geometry.setAttribute('position', new THREE.BufferAttribute(vertices, 3));
-      const material = new THREE.MeshBasicMaterial({
-        color: color,
-        transparent: true,
-        opacity: 0.2,
-        side: THREE.DoubleSide
-      });
-      return new THREE.Mesh(geometry, material);
-    };
-
-    parallelogram.userData.faces = [];
     scene.add(parallelogram);
   }
 
   function updateParallelogram() {
-    // 既存の面を削除
     parallelogram.children.forEach(child => {
       child.geometry.dispose();
       child.material.dispose();
@@ -529,22 +759,11 @@
     const pBC = vecB.clone().add(vecC);
     const pABC = vecA.clone().add(vecB).add(vecC);
 
-    // 面1: O-A-AB-B (青赤の面)
     parallelogram.add(createFace(origin, pA, pAB, pB, 0x6633cc));
-    
-    // 面2: O-A-AC-C (青緑の面)
     parallelogram.add(createFace(origin, pA, pAC, pC, 0x33cc66));
-    
-    // 面3: O-B-BC-C (赤緑の面)
     parallelogram.add(createFace(origin, pB, pBC, pC, 0xcc6633));
-    
-    // 面4: A-AB-ABC-AC (上面)
     parallelogram.add(createFace(pA, pAB, pABC, pAC, 0x9966cc));
-    
-    // 面5: B-AB-ABC-BC (側面)
     parallelogram.add(createFace(pB, pAB, pABC, pBC, 0xcc9966));
-    
-    // 面6: C-AC-ABC-BC (側面)
     parallelogram.add(createFace(pC, pAC, pABC, pBC, 0x66cc99));
   }
 
@@ -571,8 +790,6 @@
       return;
     }
     arrow.visible = true;
-
-    // 矢印の位置をベクトルの先端に設定（原点からのベクトル）
     arrow.position.set(0, 0, 0);
 
     const dir = vec.clone().normalize();
@@ -588,7 +805,6 @@
     shaft.position.set(0, len / 2, 0);
     head.position.set(0, len + 0.2, 0);
     
-    // ドラッグ用のヘルパー：矢印の先端位置を記録
     arrow.userData.tipPosition = vec.clone();
   }
 
@@ -617,9 +833,23 @@
     updateArrow(vectorBArrow, vecB);
     updateArrow(vectorCArrow, vecC);
 
+    // ヘルパー球の位置を更新
+    if(vectorAArrow.userData.helper) vectorAArrow.userData.helper.position.copy(vecA);
+    if(vectorBArrow.userData.helper) vectorBArrow.userData.helper.position.copy(vecB);
+    if(vectorCArrow.userData.helper) vectorCArrow.userData.helper.position.copy(vecC);
+
     vectorALabel.position.copy(vecA).add(new THREE.Vector3(0.4, 0.4, 0.4));
     vectorBLabel.position.copy(vecB).add(new THREE.Vector3(0.4, 0.4, 0.4));
     vectorCLabel.position.copy(vecC).add(new THREE.Vector3(0.4, 0.4, 0.4));
+
+    // 外積ベクトルの計算と更新
+    const crossAB = new THREE.Vector3().crossVectors(vecA, vecB);
+    const crossAC = new THREE.Vector3().crossVectors(vecA, vecC);
+    const crossBC = new THREE.Vector3().crossVectors(vecB, vecC);
+    
+    updateArrow(crossProductABArrow, crossAB);
+    updateArrow(crossProductACArrow, crossAC);
+    updateArrow(crossProductBCArrow, crossBC);
 
     projectionLines[0].from = vecB;
     projectionLines[0].to = vecA;
@@ -638,71 +868,36 @@
       const m2 = v2.length();
       if(m1 < 0.001 || m2 < 0.001) return 0;
       const cosAngle = v1.dot(v2) / (m1 * m2);
-      const clamped = Math.max(-1, Math.min(1, cosAngle));
-      return Math.acos(clamped) * 180 / Math.PI;
+      return Math.acos(Math.max(-1, Math.min(1, cosAngle))) * 180 / Math.PI;
     };
 
-    const radius = 0.5; // 円弧の半径
+    const radius = 0.5;
+    const pairs = [
+      {v1: vecA, v2: vecB, arc: angleArcs[0], label: angleLabels[0], radius: radius, color: 0xffff00},
+      {v1: vecA, v2: vecC, arc: angleArcs[1], label: angleLabels[1], radius: radius * 0.8, color: 0x00ffff},
+      {v1: vecB, v2: vecC, arc: angleArcs[2], label: angleLabels[2], radius: radius * 0.6, color: 0xff00ff}
+    ];
 
-    // A-B間の角度
-    const angleAB = calcAngle(vecA, vecB);
-    if(vecA.length() > 0.1 && vecB.length() > 0.1 && angleAB > 1){
-      const arcPoints = createAngleArc(vecA, vecB, radius);
-      angleArcs[0].geometry.setFromPoints(arcPoints);
-      angleArcs[0].visible = true;
-      
-      // ラベル位置：円弧の中点
-      const midAngle = Math.acos(Math.max(-1, Math.min(1, vecA.dot(vecB) / (vecA.length() * vecB.length())))) / 2;
-      const axis = new THREE.Vector3().crossVectors(vecA.clone().normalize(), vecB.clone().normalize()).normalize();
-      const labelPos = vecA.clone().normalize().applyAxisAngle(axis, midAngle).multiplyScalar(radius * 1.5);
-      
-      angleLabels[0].position.copy(labelPos);
-      updateAngleSprite(angleLabels[0], `${angleAB.toFixed(1)}°`);
-      angleLabels[0].visible = true;
-    } else {
-      angleArcs[0].visible = false;
-      angleLabels[0].visible = false;
-    }
-
-    // A-C間の角度
-    const angleAC = calcAngle(vecA, vecC);
-    if(vecA.length() > 0.1 && vecC.length() > 0.1 && angleAC > 1){
-      const arcPoints = createAngleArc(vecA, vecC, radius * 0.8);
-      angleArcs[1].geometry.setFromPoints(arcPoints);
-      angleArcs[1].material.color.set(0x00ffff);
-      angleArcs[1].visible = true;
-      
-      const midAngle = Math.acos(Math.max(-1, Math.min(1, vecA.dot(vecC) / (vecA.length() * vecC.length())))) / 2;
-      const axis = new THREE.Vector3().crossVectors(vecA.clone().normalize(), vecC.clone().normalize()).normalize();
-      const labelPos = vecA.clone().normalize().applyAxisAngle(axis, midAngle).multiplyScalar(radius * 1.3);
-      
-      angleLabels[1].position.copy(labelPos);
-      updateAngleSprite(angleLabels[1], `${angleAC.toFixed(1)}°`);
-      angleLabels[1].visible = true;
-    } else {
-      angleArcs[1].visible = false;
-      angleLabels[1].visible = false;
-    }
-
-    // B-C間の角度
-    const angleBC = calcAngle(vecB, vecC);
-    if(vecB.length() > 0.1 && vecC.length() > 0.1 && angleBC > 1){
-      const arcPoints = createAngleArc(vecB, vecC, radius * 0.6);
-      angleArcs[2].geometry.setFromPoints(arcPoints);
-      angleArcs[2].material.color.set(0xff00ff);
-      angleArcs[2].visible = true;
-      
-      const midAngle = Math.acos(Math.max(-1, Math.min(1, vecB.dot(vecC) / (vecB.length() * vecC.length())))) / 2;
-      const axis = new THREE.Vector3().crossVectors(vecB.clone().normalize(), vecC.clone().normalize()).normalize();
-      const labelPos = vecB.clone().normalize().applyAxisAngle(axis, midAngle).multiplyScalar(radius * 1.0);
-      
-      angleLabels[2].position.copy(labelPos);
-      updateAngleSprite(angleLabels[2], `${angleBC.toFixed(1)}°`);
-      angleLabels[2].visible = true;
-    } else {
-      angleArcs[2].visible = false;
-      angleLabels[2].visible = false;
-    }
+    pairs.forEach(({v1, v2, arc, label, radius, color}) => {
+      const angle = calcAngle(v1, v2);
+      if(v1.length() > 0.1 && v2.length() > 0.1 && angle > 1){
+        const arcPoints = createAngleArc(v1, v2, radius);
+        arc.geometry.setFromPoints(arcPoints);
+        arc.material.color.set(color);
+        arc.visible = true;
+        
+        const midAngle = Math.acos(Math.max(-1, Math.min(1, v1.dot(v2) / (v1.length() * v2.length())))) / 2;
+        const axis = new THREE.Vector3().crossVectors(v1.clone().normalize(), v2.clone().normalize()).normalize();
+        const labelPos = v1.clone().normalize().applyAxisAngle(axis, midAngle).multiplyScalar(radius * 1.5);
+        
+        label.position.copy(labelPos);
+        updateAngleSprite(label, `${angle.toFixed(1)}°`);
+        label.visible = true;
+      } else {
+        arc.visible = false;
+        label.visible = false;
+      }
+    });
   }
 
   function updateCalculations() {
@@ -713,18 +908,28 @@
     const magB = vecB.length();
     const magC = vecC.length();
 
+    // 外積の大きさを計算
+    const crossAB = new THREE.Vector3().crossVectors(vecA, vecB);
+    const crossAC = new THREE.Vector3().crossVectors(vecA, vecC);
+    const crossBC = new THREE.Vector3().crossVectors(vecB, vecC);
+    const magCrossAB = crossAB.length();
+    const magCrossAC = crossAC.length();
+    const magCrossBC = crossBC.length();
+
     const calcAngle = (v1, v2) => {
       const m1 = v1.length();
       const m2 = v2.length();
       if(m1 < 0.001 || m2 < 0.001) return 0;
       const cosAngle = v1.dot(v2) / (m1 * m2);
-      const clamped = Math.max(-1, Math.min(1, cosAngle));
-      return (Math.acos(clamped) * 180 / Math.PI).toFixed(1);
+      return (Math.acos(Math.max(-1, Math.min(1, cosAngle))) * 180 / Math.PI).toFixed(1);
     };
 
     document.getElementById('dotProductAB').textContent = dotAB.toFixed(2);
     document.getElementById('dotProductAC').textContent = dotAC.toFixed(2);
     document.getElementById('dotProductBC').textContent = dotBC.toFixed(2);
+    document.getElementById('crossProductAB').textContent = magCrossAB.toFixed(2);
+    document.getElementById('crossProductAC').textContent = magCrossAC.toFixed(2);
+    document.getElementById('crossProductBC').textContent = magCrossBC.toFixed(2);
     document.getElementById('magnitudeA').textContent = magA.toFixed(2);
     document.getElementById('magnitudeB').textContent = magB.toFixed(2);
     document.getElementById('magnitudeC').textContent = magC.toFixed(2);
@@ -737,37 +942,47 @@
     transformControl = new THREE.TransformControls(camera, renderer.domElement);
     transformControl.setMode('translate');
     transformControl.setSpace('world');
-    transformControl.showX = true;
-    transformControl.showY = true;
-    transformControl.showZ = true;
+    transformControl.setSize(0.8);
     
-    // 軸の制限を解除（自由に動かせるようにする）
-    transformControl.setTranslationSnap(null);
-    transformControl.setRotationSnap(null);
-    transformControl.setScaleSnap(null);
+    // カメラターゲットを保存する変数
+    let savedCameraTarget = new THREE.Vector3();
+    let savedCameraPosition = new THREE.Vector3();
     
-    // ドラッグ中はOrbitControlsを無効化
     transformControl.addEventListener('dragging-changed', (event) => {
-      controls.enabled = !event.value;
+      if(event.value) {
+        // ドラッグ開始時：OrbitControlsを無効化し、カメラの状態を保存
+        controls.enabled = false;
+        savedCameraTarget.copy(controls.target);
+        savedCameraPosition.copy(camera.position);
+      } else {
+        // ドラッグ終了時：OrbitControlsを再有効化し、ターゲットを原点に固定
+        controls.enabled = true;
+        controls.target.set(0, 0, 0);
+        controls.update();
+      }
     });
     
-    // ドラッグ中の位置更新
-    transformControl.addEventListener('objectChange', () => {
+    transformControl.addEventListener('change', () => {
       if(transformControl.object){
-        const pos = transformControl.object.position.clone();
+        // ヘルパーオブジェクトの位置を取得
+        const helperPos = transformControl.object.position.clone();
         const name = transformControl.object.userData.vectorName;
         
+        // ベクトルを更新
         if(name === 'A'){
-          vecA.copy(pos);
+          vecA.copy(helperPos);
           updateSliderFromVector('A', vecA);
         } else if(name === 'B'){
-          vecB.copy(pos);
+          vecB.copy(helperPos);
           updateSliderFromVector('B', vecB);
         } else if(name === 'C'){
-          vecC.copy(pos);
+          vecC.copy(helperPos);
           updateSliderFromVector('C', vecC);
         }
         updateAllVectors();
+        
+        // ドラッグ中もターゲットを原点に固定
+        controls.target.set(0, 0, 0);
       }
     });
     
@@ -779,9 +994,9 @@
     document.getElementById(`vector${name}X`).value = vec.x.toFixed(1);
     document.getElementById(`vector${name}Y`).value = vec.y.toFixed(1);
     document.getElementById(`vector${name}Z`).value = vec.z.toFixed(1);
-    document.getElementById(`vector${name}X-value`).textContent = vec.x.toFixed(1);
-    document.getElementById(`vector${name}Y-value`).textContent = vec.y.toFixed(1);
-    document.getElementById(`vector${name}Z-value`).textContent = vec.z.toFixed(1);
+    document.getElementById(`vector${name}X-value`).value = vec.x.toFixed(1);
+    document.getElementById(`vector${name}Y-value`).value = vec.y.toFixed(1);
+    document.getElementById(`vector${name}Z-value`).value = vec.z.toFixed(1);
   }
 
   function setupSliderControls() {
@@ -798,12 +1013,33 @@
     ];
 
     sliders.forEach(({id, vec, key, labelId}) => {
-      const input = document.getElementById(id);
-      const label = document.getElementById(labelId);
-      input.addEventListener('input', () => {
-        vec[key] = parseFloat(input.value);
-        label.textContent = parseFloat(input.value).toFixed(1);
+      const slider = document.getElementById(id);
+      const input = document.getElementById(labelId);
+      
+      // スライダー変更時
+      slider.addEventListener('input', () => {
+        const value = parseFloat(slider.value);
+        vec[key] = value;
+        input.value = value.toFixed(1);
         updateAllVectors();
+      });
+
+      // 数値入力フィールド変更時
+      input.addEventListener('input', () => {
+        let value = parseFloat(input.value);
+        if(!isNaN(value)) {
+          value = Math.max(-10, Math.min(10, value)); // 範囲制限
+          vec[key] = value;
+          slider.value = value;
+          updateAllVectors();
+        }
+      });
+
+      // Enterキーで確定
+      input.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter') {
+          input.blur();
+        }
       });
     });
 
@@ -813,7 +1049,7 @@
       vecC.set(1, 1, 3);
       sliders.forEach(({id, vec, key, labelId}) => {
         document.getElementById(id).value = vec[key];
-        document.getElementById(labelId).textContent = vec[key].toFixed(1);
+        document.getElementById(labelId).value = vec[key].toFixed(1);
       });
       updateAllVectors();
     });
@@ -826,55 +1062,40 @@
       parallelogram.visible = !parallelogram.visible;
     });
 
-    document.getElementById('toggleDragBtn').addEventListener('click', () => {
-      isDragMode = !isDragMode;
-      document.getElementById('modeInfo').style.display = isDragMode ? 'block' : 'none';
-      if(!isDragMode){
-        transformControl.detach();
-        transformControl.visible = false;
-      }
+    document.getElementById('toggleCrossBtn').addEventListener('click', () => {
+      const newVisibility = !crossProductABArrow.visible;
+      crossProductABArrow.visible = newVisibility;
+      crossProductACArrow.visible = newVisibility;
+      crossProductBCArrow.visible = newVisibility;
     });
 
-    renderer.domElement.addEventListener('click', (event) => {
-      if(!isDragMode) return;
-      
-      const mouse = new THREE.Vector2();
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    // チェックボックスでベクトルの表示切替
+    document.getElementById('toggleVectorA').addEventListener('change', (e) => {
+      vectorAArrow.visible = e.target.checked;
+      vectorALabel.visible = e.target.checked;
+    });
 
-      const raycaster = new THREE.Raycaster();
-      raycaster.setFromCamera(mouse, camera);
+    document.getElementById('toggleVectorB').addEventListener('change', (e) => {
+      vectorBArrow.visible = e.target.checked;
+      vectorBLabel.visible = e.target.checked;
+    });
 
-      const arrows = [vectorAArrow, vectorBArrow, vectorCArrow];
-      const intersects = raycaster.intersectObjects(arrows, true);
-
-      if(intersects.length > 0){
-        let obj = intersects[0].object;
-        while(obj.parent && !obj.userData.isArrow){
-          obj = obj.parent;
-        }
-        if(obj.userData.isArrow){
-          // 矢印の先端位置にTransformControlsを配置
-          const tipPos = obj.userData.tipPosition || obj.position;
-          
-          transformControl.attach(obj);
-          transformControl.visible = true;
-          
-          // すべての軸を有効にして自由に動かせるようにする
-          transformControl.showX = true;
-          transformControl.showY = true;
-          transformControl.showZ = true;
-        }
-      } else {
-        transformControl.detach();
-        transformControl.visible = false;
-      }
+    document.getElementById('toggleVectorC').addEventListener('change', (e) => {
+      vectorCArrow.visible = e.target.checked;
+      vectorCLabel.visible = e.target.checked;
     });
   }
 
   function animate() {
-    requestAnimationFrame(animate);
-    controls.update();
+    if(!isVRMode) {
+      // TransformControls使用中でない場合のみ、ターゲットを原点に固定
+      if(!transformControl.dragging) {
+        controls.target.set(0, 0, 0);
+      }
+      controls.update();
+    } else {
+      updateVRControllers();
+    }
     renderer.render(scene, camera);
   }
 
