@@ -1,0 +1,646 @@
+body {
+    margin: 0; padding: 0;
+    background: #000;
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma,Verdana, sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+  #info {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.85);
+    padding: 12px 18px;
+    border-radius: 8px;
+    width: 250px;
+    font-size: 14px;
+    line-height: 1.5em;
+    z-index: 10;
+    resize: none;
+    overflow: auto;
+    box-sizing: border-box;
+  }
+  #learningBox {
+    position: absolute;
+    top: 10px;
+    left: 280px;
+    background: rgba(0,0,0,0.85);
+    padding: 0;
+    border-radius: 8px;
+    width: 240px;
+    max-height: calc(100vh - 20px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    font-size: 14px;
+    line-height: 1.5em;
+    z-index: 10;
+    box-sizing: border-box;
+  }
+  #learningBox::-webkit-scrollbar {
+    width: 8px;
+  }
+  #learningBox::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 4px;
+  }
+  #learningBox::-webkit-scrollbar-thumb {
+    background: rgba(136, 187, 255, 0.6);
+    border-radius: 4px;
+  }
+  #learningBox::-webkit-scrollbar-thumb:hover {
+    background: rgba(136, 187, 255, 0.8);
+  }
+  #learningBox .learning-section {
+    background: transparent;
+    margin: 0;
+    border: none;
+  }
+  #info.collapsed {
+    width: auto !important;
+    height: auto !important;
+    resize: none !important;
+    padding: 8px 12px !important;
+    background: rgba(0,0,0,0.85) !important;
+  }
+  #info.collapsed .calc-row,
+  #info.collapsed hr,
+  #info.collapsed .vr-info {
+    display: none !important;
+  }
+  #info.collapsed .box-header {
+    padding-bottom: 0 !important;
+  }
+  #info.collapsed h3 {
+    font-size: 16px !important;
+    margin: 0 !important;
+  }
+  #info h3 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 20px;
+    padding-right: 32px;
+    white-space: nowrap;
+  }
+  #info .box-header {
+    position: relative;
+    padding-bottom: 10px;
+    min-height: 24px;
+  }
+  #info .toggle-box {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+  #info.collapsed .box-header {
+    cursor: move;
+  }
+.learning-section {
+  background: rgba(50, 100, 150, 0.2);
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  border-left: 3px solid #09f;
+}
+.learning-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  cursor: move;
+}
+.learning-header h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #0cf;
+}
+.toggle-learning {
+  background: #555;
+  color: #fff;
+  border: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 3px;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  padding: 0;
+  margin: 0;
+  flex-shrink: 0;
+}
+.toggle-learning:hover {
+  background: #777;
+}
+.toggle-learning:active {
+  transform: scale(0.95);
+}
+.learning-content {
+  display: block;
+}
+.learning-section.collapsed .learning-content {
+  display: none !important;
+}
+.learning-section.collapsed {
+  padding: 8px 10px !important;
+  margin-bottom: 10px;
+}
+.learn-item {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 6px 0;
+  color: #ddd;
+}
+.learn-item strong {
+  color: #0af;
+}
+
+.detail-toggle-link {
+  color: #88bbff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgba(136, 187, 255, 0.4);
+  text-underline-offset: 3px;
+  transition: all 0.2s ease;
+  display: inline-block;
+}
+.detail-toggle-link:hover {
+  color: #aaddff;
+  text-decoration-color: rgba(170, 221, 255, 0.8);
+  transform: translateX(3px);
+}
+.detail-toggle-link:active {
+  color: #66aaff;
+}
+
+.detail-section {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.4s ease;
+}
+.detail-section.expanded {
+  max-height: 500px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.detail-section::-webkit-scrollbar {
+  width: 8px;
+}
+.detail-section::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+}
+.detail-section::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.6);
+  border-radius: 4px;
+}
+.detail-section::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.8);
+}
+.detail-content {
+  padding: 15px 10px 10px 10px;
+  background: rgba(30, 30, 60, 0.5);
+  border-radius: 6px;
+  margin-top: 10px;
+  border-left: 3px solid #667eea;
+}
+.detail-content h5 {
+  margin: 15px 0 8px 0;
+  font-size: 14px;
+  color: #88ddff;
+  font-weight: 700;
+}
+.detail-content h5:first-child {
+  margin-top: 0;
+}
+.detail-content p {
+  margin: 6px 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #ddd;
+}
+.detail-content strong {
+  color: #aaf;
+}
+.detail-content ul {
+  margin: 6px 0 6px 20px;
+  padding: 0;
+}
+.detail-content li {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #ccc;
+  margin: 4px 0;
+}
+.learning-section.collapsed .detail-section {
+  display: none !important;
+}
+.learning-section.collapsed .detail-toggle-link {
+  display: none !important;
+}
+
+  #controls {
+    position: absolute;
+    top: 10px;
+    left: auto;
+    right: 10px;
+    background: rgba(0,0,0,0.85);
+    padding: 15px 20px;
+    padding-left: 20px;
+    border-radius: 8px;
+    width: 320px;
+    max-width: calc(100vw - 40px);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+    z-index: 10;
+    resize: none;
+    box-sizing: border-box;
+  }
+  @media (max-width: 768px) {
+    #controls {
+      width: calc(100vw - 40px);
+      max-width: 400px;
+      right: 10px;
+      left: auto;
+    }
+    #info {
+      width: calc(100vw - 40px);
+      max-width: 250px;
+    }
+    #learningBox {
+      top: auto;
+      bottom: 200px;
+      left: 10px;
+      width: calc(100vw - 40px);
+      max-width: 280px;
+    }
+    #dotProductGraph, #unitCircleGraph {
+      position: relative;
+      display: inline-block;
+      bottom: auto;
+      left: auto;
+      margin: 5px;
+    }
+  }
+  @media (max-width: 480px) {
+    #controls {
+      font-size: 12px;
+      width: calc(100vw - 20px);
+      right: 10px;
+      padding: 10px 15px;
+    }
+    #info {
+      font-size: 12px;
+      width: calc(100vw - 20px);
+      max-width: 200px;
+    }
+    #learningBox {
+      font-size: 12px;
+      width: calc(100vw - 20px);
+      max-width: 220px;
+    }
+    #controls h3, #info h3 {
+      font-size: 16px;
+    }
+  }
+  #controls.collapsed {
+    width: auto !important;
+    height: auto !important;
+    resize: none !important;
+    padding: 8px 12px !important;
+    background: rgba(0,0,0,0.85) !important;
+  }
+  #controls.collapsed h4,
+  #controls.collapsed .slider-container,
+  #controls.collapsed button:not(.toggle-box) {
+    display: none !important;
+  }
+  #controls.collapsed .box-header {
+    padding-bottom: 0 !important;
+  }
+  #controls.collapsed h3 {
+    font-size: 16px !important;
+    margin: 0 !important;
+  }
+  #controls h3 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 20px;
+    padding-right: 32px;
+    white-space: nowrap;
+  }
+  #controls .box-header {
+    position: relative;
+    padding-bottom: 8px;
+    min-height: 24px;
+  }
+  #controls .toggle-box {
+    position: absolute;
+    top: 0;
+    right: 0;
+  }
+  .toggle-box {
+    background: #555;
+    color: #fff;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    padding: 0;
+    margin: 0;
+    flex-shrink: 0;
+    -webkit-user-drag: none;
+    user-drag: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .toggle-box:hover {
+    background: #777;
+  }
+  .toggle-box:active {
+    transform: scale(0.95);
+  }
+  .calc-row {
+    margin: 6px 0;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+  }
+  .calc-label { color: #aaa; }
+  .calc-value { color: #0cf; }
+  #controls .resize-handle {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 60px;
+    width: 5px;
+    cursor: ew-resize;
+    background: rgba(100, 150, 255, 0.1);
+    border-left: 2px solid rgba(100, 150, 255, 0.3);
+    border-radius: 0 3px 3px 0;
+    z-index: 20;
+    transition: all 0.2s;
+  }
+  #controls .resize-handle:hover {
+    background: rgba(100, 150, 255, 0.25);
+    border-left-color: rgba(100, 150, 255, 0.7);
+  }
+  #controls.collapsed .resize-handle {
+    display: none !important;
+  }
+  #controls.hidden {
+    display: none;
+  }
+  #controls h4 {
+    margin: 12px 0 8px 0;
+    font-weight: 700;
+    border-bottom: 1px solid #444;
+    padding-bottom: 4px;
+    display: flex;
+    align-items: center;
+  }
+  .slider-container {
+    margin-bottom: 8px;
+  }
+  label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 3px;
+  }
+  input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 6px;
+    border-radius: 5px;
+    background: #444;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #09f;
+    cursor: pointer;
+    border: 2px solid #fff;
+    transition: 0.3s ease;
+  }
+  input[type=range]::-webkit-slider-thumb:hover {
+    background: #06c;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #09f;
+    cursor: pointer;
+    border: 2px solid #fff;
+  }
+  .value { color: #0af; font-weight: 600; }
+  .value.red { color: #f55; }
+  .value.green { color: #5f5; }
+  .value-input {
+    width: 60px;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #0af;
+    font-weight: 600;
+    font-size: 13px;
+    text-align: right;
+  }
+  .value-input.red { color: #f55; }
+  .value-input.green { color: #5f5; }
+  .value-input:focus {
+    outline: none;
+    border-color: #09f;
+    background: rgba(255, 255, 255, 0.15);
+  }
+  button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 8px;
+    border: none;
+    background: #08a;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: 0.3s ease;
+  }
+  button:hover { background: #06a; }
+  canvas { display: block; }
+  .mode-info {
+    background: rgba(255, 150, 0, 0.9);
+    padding: 8px 12px;
+    border-radius: 5px;
+    margin: 8px 0;
+    font-size: 13px;
+  }
+  .vr-info {
+    background: rgba(255, 100, 100, 0.9);
+    padding: 8px 12px;
+    border-radius: 5px;
+    margin: 8px 0;
+    font-size: 12px;
+  }
+  .show-panel-btn {
+    display: none;
+  }
+  #dotProductGraph {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 10px;
+    border-radius: 8px;
+    z-index: 10;
+    overflow: visible;
+    cursor: move;
+    width: 220px;
+    height: 170px;
+  }
+  #dotProductGraph * {
+    position: relative;
+  }
+  #dotProductGraph > .graph-resize-handle {
+    position: absolute;
+  }
+  #dotProductGraph.dragging {
+    cursor: grabbing;
+  }
+  .canvas-wrapper {
+    overflow: hidden;
+    border-radius: 4px;
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+  #graphCanvas {
+    display: block;
+    width: 200px;
+    height: 150px;
+    pointer-events: none;
+    position: relative;
+    z-index: 1;
+  }
+  #unitCircleGraph {
+    position: absolute;
+    bottom: 10px;
+    left: 240px;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 10px;
+    border-radius: 8px;
+    z-index: 10;
+    overflow: visible;
+    cursor: move;
+    width: 200px;
+    height: 200px;
+  }
+  #unitCircleGraph * {
+    position: relative;
+  }
+  #unitCircleGraph > .graph-resize-handle {
+    position: absolute;
+  }
+  #unitCircleGraph.dragging {
+    cursor: grabbing;
+  }
+  #unitCircleCanvas {
+    display: block;
+    width: 180px;
+    height: 180px;
+    pointer-events: none;
+    position: relative;
+    z-index: 1;
+  }
+  .graph-resize-handle {
+    position: absolute;
+    right: -2px;
+    bottom: -2px;
+    width: 20px;
+    height: 20px;
+    cursor: nwse-resize;
+    background: linear-gradient(135deg, transparent 45%, rgba(100, 150, 255, 0.8) 50%, rgba(100, 150, 255, 0.8) 55%, transparent 60%);
+    border-bottom-right-radius: 8px;
+    z-index: 999;
+    pointer-events: auto;
+    border: 1px solid rgba(100, 150, 255, 0.3);
+  }
+  .graph-resize-handle:hover {
+    background: linear-gradient(135deg, transparent 40%, rgba(100, 200, 255, 1) 50%, rgba(100, 200, 255, 1) 60%, transparent 65%);
+    width: 24px;
+    height: 24px;
+    right: -4px;
+    bottom: -4px;
+    border-color: rgba(100, 200, 255, 0.6);
+  }
+  .graph-resize-handle::before {
+    content: '';
+    position: absolute;
+    right: 3px;
+    bottom: 3px;
+    width: 8px;
+    height: 8px;
+    border-right: 2px solid rgba(255, 255, 255, 0.9);
+    border-bottom: 2px solid rgba(255, 255, 255, 0.9);
+  }
+  @media (max-width: 768px) {
+    #dotProductGraph {
+      left: 5px;
+      bottom: 5px;
+      padding: 5px;
+    }
+    #unitCircleGraph {
+      left: 160px;
+      bottom: 5px;
+      padding: 5px;
+    }
+    #graphCanvas {
+      width: 150px;
+      height: 112px;
+    }
+    #unitCircleCanvas {
+      width: 135px;
+      height: 135px;
+    }
+  }
+  @media (max-width: 480px) {
+    #dotProductGraph {
+      left: 5px;
+      bottom: 150px;
+    }
+    #unitCircleGraph {
+      left: 5px;
+      bottom: 5px;
+    }
+    #graphCanvas {
+      width: 120px;
+      height: 90px;
+    }
+    #unitCircleCanvas {
+      width: 120px;
+      height: 120px;
+    }
+  }
+
+#graphCanvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+#unitCircleCanvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
