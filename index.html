@@ -302,29 +302,6 @@
     renderer.setPixelRatio(window.devicePixelRatio);
     renderer.xr.enabled = true;
     document.body.appendChild(renderer.domElement);
-    
-
-    try {
-      const vrButton = VRButton.createButton(renderer);
-      vrButton.style.position = 'absolute';
-      vrButton.style.bottom = '20px';
-      vrButton.style.left = '50%';
-      vrButton.style.transform = 'translateX(-50%)';
-      vrButton.style.zIndex = '999';
-      document.body.appendChild(vrButton);
-
-      renderer.xr.addEventListener('sessionstart', () => {
-        isVRMode = true;
-        document.getElementById('vrInfo').style.display = 'block';
-      });
-
-      renderer.xr.addEventListener('sessionend', () => {
-        isVRMode = false;
-        document.getElementById('vrInfo').style.display = 'none';
-      });
-    } catch(e) {
-      console.warn('VR not available:', e);
-    }
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 0, 0);
@@ -1496,6 +1473,28 @@ function updateDotProductGraph() {
     document.getElementById('toggleVectorC').addEventListener('change', (e) => {
       updateAllVectors();
     });
+
+    document.getElementById('module').addEventListener('click', async () => {
+ try {
+   if (!navigator.xr) {
+     alert('このブラウザはWebXRに対応していません');
+     return;
+   }
+   const session = await navigator.xr.requestSession('immersive-vr', {
+     optionalFeatures: ['local-floor', 'bounded-floor']
+   });
+   await renderer.xr.setSession(session);
+   isVRMode = true;
+   document.getElementById('vrInfo').style.display = 'block';
+   session.addEventListener('end', () => {
+     isVRMode = false;
+     document.getElementById('vrInfo').style.display = 'none';
+   });
+ } catch(err) {
+   console.error('VR開始失敗:', err);
+   alert('VRセッションの開始に失敗しました: ' + err.message);
+ }
+});
   }
 
   function animate() {
