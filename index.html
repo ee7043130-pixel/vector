@@ -265,7 +265,7 @@
 </div>
 
 <script>
-  let scene, camera, renderer, controls;
+  let scene, camera, renderer, OrbitControls;
   let vectorAArrow, vectorBArrow, vectorCArrow;
   let vectorALabel, vectorBLabel, vectorCLabel;
   let crossProductABArrow, crossProductACArrow, crossProductBCArrow;
@@ -467,24 +467,41 @@ renderer.domElement.addEventListener('touchmove', (e) => {
     }
   });
 }
-
+//VRモードではDOMは空間に入らない
+let vrPanel = null;
   function setupVRControllers() {
+
     //VR開始時のカメラ位置調整
     renderer.xr.addEventListener('sessionstart', () => {
-   camera.position.set(15, 15, 15);  // より遠くに配置
+   camera.position.set(15, 15, 15);
    camera.lookAt(0, 0, 0);
+
     //UIパネルをVR内に表示
-   document.getElementById('controls').style.display = 'block';
-   document.getElementById('info').style.display = 'block';
+   document.getElementById('controls').style.display = 'none';
+   document.getElementById('info').style.display = 'none';
+
+   vrPanel = createVRPanel();
+   camera.add(vrPanel);
+    });
+
+     renderer.xr.addEventListener('sessionend', () => {
+      document.getElementById('controls').style.display = 'block';
+      document.getElementById('info').style.display = 'block';
+
+      if(vrPanel){
+        vrPanel.parent.remove(vrPanel);
+        vrPanel = null;
+      }
+ });
+}
    // パネルを画面内に配置
    const controls = document.getElementById('controls');
    controls.style.position = 'fixed';
    controls.style.right = '10px';
    controls.style.bottom = '10px';
- });
- renderer.xr.addEventListener('sessionend', () => {
+
    // VR終了時は通常表示に戻す
- });
+
  controller1 = renderer.xr.getController(0);
  controller1 = renderer.xr.getController(0);
  controller1.addEventListener('selectstart', onSelectStart);
@@ -518,7 +535,6 @@ renderer.domElement.addEventListener('touchmove', (e) => {
     const line2 = new THREE.Line(geometry.clone(), lineMaterial.clone());
     line2.scale.z = 5;
     controller2.add(line2);
-  }
 
   function onSelectStart(event) {
     const controller = event.target;
