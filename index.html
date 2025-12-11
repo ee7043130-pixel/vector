@@ -37,12 +37,12 @@
         <h5> 内積(ドット積)</h5>
         <p><strong>定義:</strong> A·B = |A||B|cosθ</p>
         <p><strong>座標計算:</strong> A·B = AxBx + AyBy + AzBz</p>
-        <p><strong>意味:</strong></p>
+        <p><strong>⭐意味:</strong></p>
         <ul>
           <li>2つのベクトルの向きの近さ</li>
-          <li>同じ向き(鋭角) → 正 </li>
-          <li>垂直(直交) → 0 </li>
-          <li>逆向き(鈍角) → 負</li>
+          <li>内積が正：鋭角(0°＜𝜃＜90°)	 </li>
+          <li>内積が0  ：垂直(𝜃＝90°)</li>
+          <li>内積が負：鈍角(90°＜𝜃＜180°)</li>
           <li>平行(同じ向き) → Θ＝0°</li>
           <li>平行(逆向き) → Θ＝180°</li>
         </ul>
@@ -58,19 +58,19 @@
         <p><strong>定義:</strong> |A×B| = |A||B|sinθ</p>
         <p><strong>座標計算:</strong></p>
         <p>A×B = (AyBz-AzBy, AzBx-AxBz, AxBy-AyBx)</p>
-        <p><strong>意味:</strong></p>
+        <p><strong>⭐意味:</strong></p>
         <ul>
           <li>2つのベクトルが作る平行四辺形の面積</li>
           <li>2つのベクトルに垂直なベクトル</li>
           <li>平行(逆平行) → 0 </li>
           <li>垂直(直交) → 最大(90°)</li>
           <p></p>
-          <p>右手の法則を参考に</p>
+          <p>右手の法則で方向が決まる</p>
           <p>A(人差し指),B(中指),外積(親指)　</p> 
         </ul>
 
         <h5> 単位ベクトル</h5>
-        <p><strong>意味:</strong></p>
+        <p><strong>⭐意味:</strong></p>
         <ul>
           <li>長さが１のベクトル</li>
           <p>e₁＝(1,0,0)</p>
@@ -79,7 +79,7 @@
           
         </ul>
 
-        <h5>まとめ,point</h5> 
+        <h5>⭐まとめ,point</h5> 
         <ul>
           <li> 内積は角度が小さいほど大きくなる</li>
           <li> 外積は長さが長いほど大きくなる</li>
@@ -260,6 +260,7 @@
   <button id="toggleCrossBtn">外積ON/OFF</button>
   <button id="toggleGridBtn">グリッド線ON/OFF</button>
   <button id="resetBtn">リセット</button>
+  <button id="module">VR</button>
 </div>
 
 <script>
@@ -1850,4 +1851,56 @@ function updateDotProductGraph() {
 </script>
 
 </body>
+<button id="module">VR</button>
+<script>
+
+document.getElementById('module').addEventListener('click', async () => {
+
+    try {
+
+        const renderer = window.renderer;
+
+        if (!renderer) {
+
+            console.error("renderer が見つからないよ！");
+
+            return;
+
+        }
+
+        // WebXR 有効化
+
+        renderer.xr.enabled = true;
+
+        // VRセッション開始
+
+        const session = await navigator.xr.requestSession('immersive-vr', {
+
+            optionalFeatures: ['local-floor', 'bounded-floor']
+
+        });
+
+        await renderer.xr.setSession(session);
+
+        // VR中はボタンを隠す
+
+        document.getElementById('module').style.display = "none";
+
+        // VR終了したらボタンを再表示
+
+        session.addEventListener('end', () => {
+
+            document.getElementById('module').style.display = "block";
+
+        });
+
+    } catch (err) {
+
+        console.error("VR開始失敗:", err);
+
+    }
+
+});
+</script>
+ 
 </html>
