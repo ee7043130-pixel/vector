@@ -467,40 +467,22 @@ renderer.domElement.addEventListener('touchmove', (e) => {
     }
   });
 }
-//VRモードではDOMは空間に入らない
-let vrPsnel = null;
-  function setupVRControllers() {
 
+  function setupVRControllers() {
     //VR開始時のカメラ位置調整
     renderer.xr.addEventListener('sessionstart', () => {
-   camera.position.set(15, 15, 15);
+   camera.position.set(15, 15, 15);  // より遠くに配置
    camera.lookAt(0, 0, 0);
-
     //UIパネルをVR内に表示
-   document.getElementById('controls').style.display = 'none';
-   document.getElementById('info').style.display = 'none';
-
-   vrPanel = createVRPanel();
-   camera.add(vrPanel);
-    });
-
-     renderer.xr.addEventListener('sessionend', () => {
-      document.getElementById('controls').style.display = 'block';
-      document.getElementById('info').style.display = 'block';
-
-      if(vrPanel){
-        vrPanel.parent.remove(vrPanel);
-        vrPanel = null;
-      }
-
+   document.getElementById('controls').style.display = 'block';
+   document.getElementById('info').style.display = 'block';
    // パネルを画面内に配置
    const controls = document.getElementById('controls');
    controls.style.position = 'fixed';
    controls.style.right = '10px';
    controls.style.bottom = '10px';
-
-
-
+ });
+ renderer.xr.addEventListener('sessionend', () => {
    // VR終了時は通常表示に戻す
  });
  controller1 = renderer.xr.getController(0);
