@@ -265,7 +265,7 @@
 </div>
 
 <script>
-  let scene, camera, renderer, OrbitControls;
+  let scene, camera, renderer, controls;
   let vectorAArrow, vectorBArrow, vectorCArrow;
   let vectorALabel, vectorBLabel, vectorCLabel;
   let crossProductABArrow, crossProductACArrow, crossProductBCArrow;
@@ -468,7 +468,7 @@ renderer.domElement.addEventListener('touchmove', (e) => {
   });
 }
 //VRモードではDOMは空間に入らない
-let vrPanel = null;
+let vrPsnel = null;
   function setupVRControllers() {
 
     //VR開始時のカメラ位置調整
@@ -492,16 +492,17 @@ let vrPanel = null;
         vrPanel.parent.remove(vrPanel);
         vrPanel = null;
       }
- });
-}
+
    // パネルを画面内に配置
    const controls = document.getElementById('controls');
    controls.style.position = 'fixed';
    controls.style.right = '10px';
    controls.style.bottom = '10px';
 
-   // VR終了時は通常表示に戻す
 
+
+   // VR終了時は通常表示に戻す
+ });
  controller1 = renderer.xr.getController(0);
  controller1 = renderer.xr.getController(0);
  controller1.addEventListener('selectstart', onSelectStart);
@@ -535,6 +536,7 @@ let vrPanel = null;
     const line2 = new THREE.Line(geometry.clone(), lineMaterial.clone());
     line2.scale.z = 5;
     controller2.add(line2);
+  }
 
   function onSelectStart(event) {
     const controller = event.target;
