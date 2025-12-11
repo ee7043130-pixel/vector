@@ -3,7 +3,7 @@
 <head>
   <link rel="stylesheet" href="vector.css">
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0,user-scalable=no" />
 <title>ベクトル学習</title>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -261,6 +261,7 @@
   <button id="toggleGridBtn">グリッド線ON/OFF</button>
   <button id="resetBtn">リセット</button>
   <button id="module">VR</button>
+
 </div>
 
 <script>
@@ -337,6 +338,19 @@
   MIDDLE: THREE.MOUSE.PAN,
   RIGHT: THREE.MOUSE.PAN
 };
+
+controls.touches = {
+  ONE: THREE.TOUCH.ROTATE,
+  TWO: THREE.TOUCH.DOLLY_PAN
+};
+
+renderer.domElement.addEventListener('touchstart', (e) => {
+  e.stopPropagation();
+}, { passive: false });
+renderer.domElement.addEventListener('touchmove', (e) => {
+  e.stopPropagation();
+}, { passive: false });
+
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
     scene.add(ambientLight);
@@ -1849,58 +1863,4 @@ function updateDotProductGraph() {
   });
   
 </script>
-
-</body>
-<button id="module">VR</button>
-<script>
-
-document.getElementById('module').addEventListener('click', async () => {
-
-    try {
-
-        const renderer = window.renderer;
-
-        if (!renderer) {
-
-            console.error("renderer が見つからないよ！");
-
-            return;
-
-        }
-
-        // WebXR 有効化
-
-        renderer.xr.enabled = true;
-
-        // VRセッション開始
-
-        const session = await navigator.xr.requestSession('immersive-vr', {
-
-            optionalFeatures: ['local-floor', 'bounded-floor']
-
-        });
-
-        await renderer.xr.setSession(session);
-
-        // VR中はボタンを隠す
-
-        document.getElementById('module').style.display = "none";
-
-        // VR終了したらボタンを再表示
-
-        session.addEventListener('end', () => {
-
-            document.getElementById('module').style.display = "block";
-
-        });
-
-    } catch (err) {
-
-        console.error("VR開始失敗:", err);
-
-    }
-
-});
-</script>
- 
 </html>
