@@ -377,7 +377,7 @@ function createVRUIPanel() {
  const geometry = new THREE.PlaneGeometry(3, 3);
  const mesh = new THREE.Mesh(geometry, material);
  // パネルをカメラの左側に配置
- mesh.position.set(-4, 1.5, -3);
+ mesh.position.set(-8, 3, -6);
  mesh.rotation.y = Math.PI / 6; // 少し内側を向ける
  return mesh;
 }
@@ -403,7 +403,7 @@ function createVRCalcPanel() {
  const geometry = new THREE.PlaneGeometry(2, 3);
  const mesh = new THREE.Mesh(geometry, material);
  // パネルをカメラの右側に配置
- mesh.position.set(4, 1.5, -3);
+ mesh.position.set(8, 3 -6);
  mesh.rotation.y = -Math.PI / 6;
  return mesh;
 }
@@ -589,7 +589,7 @@ function updateVRCalcPanel(mesh) {
     renderer.xr.addEventListener('sessionstart', () => {
     isVRMode=true;
 
-   camera.position.set(30,30, 30);  // より遠くに配置
+   camera.position.set(100,100,100);  // より遠くに配置
    camera.lookAt(0, 0, 0);
 
    vrUIPanel = createVRUIPanel();
