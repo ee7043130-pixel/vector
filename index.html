@@ -588,8 +588,7 @@ function updateVRCalcPanel(mesh) {
     //VR開始時のカメラ位置調整
     renderer.xr.addEventListener('sessionstart', () => {
     isVRMode=true;
-    
-    const controller = renderer.xr.getController(0);
+
    camera.position.set(300,300,300);  // より遠くに配置
    camera.lookAt(0, 0, 0);
 
@@ -1654,16 +1653,13 @@ function updateDotProductGraph() {
   }
 
   function animate() {
-
     if(!isVRMode) {
       if(!transformControl.dragging) {
         controls.target.set(0, 0, 0);
       }
-
       controls.update();
     } else {
       updateVRControllers();
-      requestAnimationFrame(animate);
     }
     renderer.render(scene, camera);
   }
@@ -2013,7 +2009,7 @@ function updateDotProductGraph() {
   });
 
   dotGraph.addEventListener('auxclick', (e) => {
-    if (e.button === 1) e.preventDefault(); 
+    if (e.button === 1) e.preventDefault();
   });
   
   unitGraph.addEventListener('auxclick', (e) => {
