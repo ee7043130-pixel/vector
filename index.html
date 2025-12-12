@@ -335,6 +335,122 @@ renderer.domElement.addEventListener('touchmove', (e) => {
     directionalLight.position.set(10, 10, 10);
     scene.add(directionalLight);
 
+    // VR用の3D UIパネルを作成
+function createVRUIPanel() {
+ const canvas = document.createElement('canvas');
+ canvas.width = 1024;
+ canvas.height = 1024;
+ const ctx = canvas.getContext('2d');
+ // 背景
+ ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+ ctx.fillRect(0, 0, 1024, 1024);
+ // タイトル
+ ctx.fillStyle = '#0cf';
+ ctx.font = 'bold 48px Arial';
+ ctx.fillText('📖 ベクトル学習', 50, 80);
+ // 内容
+ ctx.fillStyle = '#ddd';
+ ctx.font = '32px Arial';
+ let y = 150;
+ const lines = [
+   '内積を"・" 外積を"×"で表す',
+   '',
+   '内積: 向きの近さ',
+   '外積: 平行四辺形の面積',
+   '|〇|: ベクトルの大きさ',
+   '',
+   '操作方法:',
+   '・トリガー: 矢印を掴む',
+   '・スティック: 移動'
+ ];
+ lines.forEach(line => {
+   ctx.fillText(line, 50, y);
+   y += 45;
+ });
+ // テクスチャとして使用
+ const texture = new THREE.CanvasTexture(canvas);
+ const material = new THREE.MeshBasicMaterial({
+   map: texture,
+   transparent: true,
+   side: THREE.DoubleSide
+ });
+ const geometry = new THREE.PlaneGeometry(3, 3);
+ const mesh = new THREE.Mesh(geometry, material);
+ // パネルをカメラの左側に配置
+ mesh.position.set(-4, 1.5, -3);
+ mesh.rotation.y = Math.PI / 6; // 少し内側を向ける
+ return mesh;
+}
+// VR用の計算結果パネルを作成
+function createVRCalcPanel() {
+ const canvas = document.createElement('canvas');
+ canvas.width = 512;
+ canvas.height = 768;
+ const ctx = canvas.getContext('2d');
+ // 背景
+ ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+ ctx.fillRect(0, 0, 512, 768);
+ // タイトル
+ ctx.fillStyle = '#0cf';
+ ctx.font = 'bold 36px Arial';
+ ctx.fillText('🧮 計算結果', 30, 50);
+ const texture = new THREE.CanvasTexture(canvas);
+ const material = new THREE.MeshBasicMaterial({
+   map: texture,
+   transparent: true,
+   side: THREE.DoubleSide
+ });
+ const geometry = new THREE.PlaneGeometry(2, 3);
+ const mesh = new THREE.Mesh(geometry, material);
+ // パネルをカメラの右側に配置
+ mesh.position.set(4, 1.5, -3);
+ mesh.rotation.y = -Math.PI / 6;
+ return mesh;
+}
+// VR計算パネルを更新
+function updateVRCalcPanel(mesh) {
+ const canvas = document.createElement('canvas');
+ canvas.width = 512;
+ canvas.height = 768;
+ const ctx = canvas.getContext('2d');
+ ctx.fillStyle = 'rgba(0, 0, 0, 0.9)';
+ ctx.fillRect(0, 0, 512, 768);
+ ctx.fillStyle = '#0cf';
+ ctx.font = 'bold 36px Arial';
+ ctx.fillText('🧮 計算結果', 30, 50);
+ ctx.fillStyle = '#ddd';
+ ctx.font = '28px Arial';
+ let y = 120;
+ const dotAB = vecA.dot(vecB).toFixed(2);
+ const magA = vecA.length().toFixed(2);
+ const magB = vecB.length().toFixed(2);
+ const magC = vecC.length().toFixed(2);
+ const calcAngle = (v1, v2) => {
+   const m1 = v1.length();
+   const m2 = v2.length();
+   if(m1 < 0.001 || m2 < 0.001) return 0;
+   const cosAngle = v1.dot(v2) / (m1 * m2);
+   return (Math.acos(Math.max(-1, Math.min(1, cosAngle))) * 180 / Math.PI).toFixed(1);
+ };
+ const angleAB = calcAngle(vecA, vecB);
+ const lines = [
+   `A·B: ${dotAB}`,
+   '',
+   `|A|: ${magA}`,
+   `|B|: ${magB}`,
+   `|C|: ${magC}`,
+   '',
+   `∠(A,B): ${angleAB}°`
+ ];
+ lines.forEach(line => {
+   ctx.fillText(line, 30, y);
+   y += 50;
+ });
+ mesh.material.map.dispose();
+ mesh.material.map = new THREE.CanvasTexture(canvas);
+ mesh.material.needsUpdate = true;
+}
+
     setupVRControllers();
     createGrid();
     createVectorArrows();
@@ -476,13 +592,30 @@ renderer.domElement.addEventListener('touchmove', (e) => {
    camera.position.set(30,30, 30);  // より遠くに配置
    camera.lookAt(0, 0, 0);
 
+   vrUIPanel = createVRUIPanel();
+   sence.add(VRUIPanel);
+
+   vrUICalcPanel = createVRCalcPanel();
+   sence.add(vrCalcPanel);
+
     //UIパネルをVR内に表示
-   document.getElementById('vrinfo').style.display = 'block';
+   document.getElementById('vrInfo').style.display = 'block';
     });
 
    renderer.xr.addEventListener('sessionstart', () => {
     isVRMode=false;
-    document.getElementById('vrinfo').style.display = 'none';
+
+    // VR用UIパネルを削除
+   if(vrUIPanel) {
+     scene.remove(vrUIPanel);
+     vrUIPanel = null;
+   }
+   if(vrCalcPanel) {
+     scene.remove(vrCalcPanel);
+     vrCalcPanel = null;
+   }
+
+    document.getElementById('vrInfo').style.display = 'none';
     });
 
     controller1 = renderer.xr.getController(0);
@@ -1017,7 +1150,13 @@ renderer.domElement.addEventListener('touchmove', (e) => {
     updateCalculations();
     updateDotProductGraph();
     updateUnitCircleGraph();
-  }
+
+     // VRモード時は計算パネルを更新
+ if(isVRMode && vrCalcPanel) {
+   updateVRCalcPanel(vrCalcPanel);
+ }
+}
+
 //角度
   function updateAngleDisplays() {
     const isAVisible = document.getElementById('toggleVectorA').checked;
